@@ -62,10 +62,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
             {/* Sidebar */}
             <div className={`fixed inset-y-0 right-0 w-80 bg-surface border-l border-surfaceHighlight z-50 transform transition-transform duration-300 ease-in-out shadow-2xl ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="flex items-center justify-between p-4 border-b border-surfaceHighlight">
-                    <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
                         <Icons.History className="w-5 h-5 text-text-primary" /> History
                     </h2>
-                    <button onClick={onClose} className="text-text-muted hover:text-white transition-colors">
+                    <button onClick={onClose} className="text-text-muted hover:text-primary transition-colors">
                         <Icons.X className="w-5 h-5" />
                     </button>
                 </div>
@@ -76,7 +76,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
                             Please sign in to view history.
                         </div>
                     ) : loading ? (
-                        <div className="flex justify-center mt-10 text-primary">
+                        <div className="flex justify-center mt-10 text-text-primary">
                             <Icons.RefreshCw className="w-6 h-6 animate-spin" />
                         </div>
                     ) : history.length === 0 ? (
@@ -98,7 +98,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
                                     className="absolute top-2 right-2 z-10 w-7 h-7 bg-black/60 hover:bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                                     title="Delete"
                                 >
-                                    <Icons.X className="w-4 h-4 text-white" />
+                                    <Icons.X className="w-4 h-4 text-text-primary" />
                                 </button>
 
                                 <div
@@ -114,7 +114,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
                                             />
                                         )}
                                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                                            <p className="text-xs text-white font-medium truncate">
+                                            <p className="text-xs text-text-primary font-medium truncate">
                                                 {new Date(item.created_at).toLocaleDateString()}
                                             </p>
                                         </div>
@@ -143,7 +143,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
                             <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
                                 <Icons.AlertCircle className="w-6 h-6 text-red-500" />
                             </div>
-                            <h3 className="text-lg font-bold text-white">Delete this kit?</h3>
+                            <h3 className="text-lg font-bold text-text-primary">Delete this kit?</h3>
                             <p className="text-sm text-text-muted">
                                 Are you sure you want to delete this generation? This action cannot be undone.
                             </p>
@@ -151,14 +151,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
                                 <button
                                     onClick={() => setDeleteConfirm(null)}
                                     disabled={deleting}
-                                    className="flex-1 px-4 py-2 bg-surfaceHighlight hover:bg-surface text-white rounded-lg transition-colors"
+                                    className="flex-1 px-4 py-2 bg-surfaceHighlight hover:bg-surface text-text-primary rounded-lg transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={() => handleDelete(deleteConfirm)}
                                     disabled={deleting}
-                                    className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-text-primary rounded-lg transition-colors flex items-center justify-center gap-2"
                                 >
                                     {deleting ? (
                                         <>

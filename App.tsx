@@ -18,6 +18,7 @@ import { PrivacyPolicy } from './components/pages/PrivacyPolicy';
 import { NotFound } from './components/pages/NotFound';
 import { AuthCallback } from './components/pages/AuthCallback';
 import { ThemeToggle } from './components/ThemeToggle';
+import { Analytics } from '@vercel/analytics/react'; 
 
 const DEFAULT_CONFIG: SocialKitConfig = {
   tone: 'playful',
@@ -734,6 +735,7 @@ const Content: React.FC = () => {
 const App: React.FC = () => {
   return (
     <Router>
+      <Analytics />
       <Content />
     </Router>
   )

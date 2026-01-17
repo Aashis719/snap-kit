@@ -45,7 +45,7 @@ export const AuthCallback: React.FC = () => {
                 setMessage('Email verified successfully! Redirecting...');
                 setTimeout(() => {
                     navigate('/');
-                }, 2000);
+                }, 3000);
             }
         });
 

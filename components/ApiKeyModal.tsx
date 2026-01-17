@@ -25,7 +25,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave, onClos
       <div className="bg-surface rounded-2xl shadow-2xl w-full max-w-lg p-6 transform transition-all scale-100 border border-surfaceHighlight">
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+            <h3 className="text-xl font-bold text-text-primary flex items-center gap-2">
               <Icons.Settings className="w-5 h-5 text-text-primary" />
               Setup Gemini API
             </h3>
@@ -41,7 +41,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave, onClos
 
           {/* Guide Section */}
           <div className="bg-surfaceHighlight/30 rounded-xl p-5 border border-surfaceHighlight">
-            <h4 className="text-sm font-semibold text-text-main mb-3 flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
               <Icons.Sparkles className="w-4 h-4 text-primary" />
               How to get your free key:
             </h4>
