@@ -63,7 +63,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
             <div className={`fixed inset-y-0 right-0 w-80 bg-surface border-l border-surfaceHighlight z-50 transform transition-transform duration-300 ease-in-out shadow-2xl ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="flex items-center justify-between p-4 border-b border-surfaceHighlight">
                     <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Icons.History className="w-5 h-5 text-primary" /> History
+                        <Icons.History className="w-5 h-5 text-text-primary" /> History
                     </h2>
                     <button onClick={onClose} className="text-text-muted hover:text-white transition-colors">
                         <Icons.X className="w-5 h-5" />

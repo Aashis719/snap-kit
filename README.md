@@ -49,20 +49,8 @@ Built with a modern, high-performance web architecture:
 
 **Services:**
 - Cloudinary (Image Storage)
-- Resend (Email Verification)
 
 ---
-
-## 📦 Quick Start
-
-### Prerequisites
-
-- Node.js 18+ installed
-- Supabase account
-- Cloudinary account
-- Resend account (for email)
-- Google Gemini API keys (3+ recommended)
-
 
 ## 🏗️ Project Structure
 
@@ -98,7 +86,7 @@ snapkit/
 
 ## 💡 How It Works
 
-1. **User Signs Up** → Email verification sent via Resend
+1. **User Signs Up** → Email verification sent 
 2. **User Verifies Email** → Account activated
 3. **User Uploads Image** → Stored in Cloudinary
 4. **AI Analyzes Image** → Gemini Vision API

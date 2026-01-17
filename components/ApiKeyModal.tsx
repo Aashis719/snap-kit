@@ -26,13 +26,13 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave, onClos
         <div className="flex justify-between items-start mb-6">
           <div>
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
-              <Icons.Settings className="w-5 h-5 text-primary" />
+              <Icons.Settings className="w-5 h-5 text-text-primary" />
               Setup Gemini API
             </h3>
             <p className="text-sm text-text-muted mt-1">Required to generate content</p>
           </div>
 
-          <button onClick={onClose} className="text-text-muted hover:text-white transition-colors p-1">
+          <button onClick={onClose} className="text-text-muted hover:text-primary transition-colors p-1">
             <Icons.X className="w-6 h-6" />
           </button>
         </div>
@@ -64,7 +64,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave, onClos
               value={key}
               onChange={(e) => setKey(e.target.value)}
               placeholder="AIzaSy..."
-              className="w-full px-4 py-3 rounded-xl bg-surfaceHighlight border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm font-mono text-white placeholder-text-muted/50"
+              className="w-full px-4 py-3 rounded-xl bg-surfaceHighlight border border-border focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all text-sm font-mono text-text-primary placeholder-text-muted/50"
             />
             <p className="text-xs text-text-muted mt-2 flex items-center gap-1">
               <Icons.Check className="w-3 h-3" /> Stored safely in Database

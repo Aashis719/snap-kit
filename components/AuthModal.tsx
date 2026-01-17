@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Icons } from './ui/Icons';
 
@@ -15,6 +15,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [emailSent, setEmailSent] = useState(false);
+
+    // Reset all states when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setEmail('');
+            setPassword('');
+            setError(null);
+            setEmailSent(false);
+            setLoading(false);
+            setIsLogin(true);
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
