@@ -71,24 +71,37 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onSave, onClos
             </p>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-text-muted hover:text-white font-medium text-sm transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => onSave(key)}
-              disabled={!key}
-              className={`px-6 py-2 rounded-lg font-medium transition-all shadow-sm
-                ${key
-                  ? 'bg-primary text-white hover:bg-primaryHover hover:shadow-lg hover:shadow-primary/20'
-                  : 'bg-surfaceHighlight text-text-muted cursor-not-allowed'
-                }`}
-            >
-              Save & Continue
-            </button>
+          <div className="flex justify-between items-center gap-3 pt-2">
+            <div>
+              {currentKey && (
+                <button
+                  onClick={() => onSave('')}
+                  className="text-red-500 hover:text-red-400 text-sm font-medium transition-colors flex items-center gap-1.5"
+                >
+                  <Icons.X className="w-4 h-4" />
+                  Remove Api Key
+                </button>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-text-muted hover:text-white font-medium text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => onSave(key.trim())}
+                disabled={!key.trim() || key.trim() === currentKey}
+                className={`px-6 py-2 rounded-lg font-medium transition-all shadow-sm
+                  ${key.trim() && key.trim() !== currentKey
+                    ? 'bg-primary text-white hover:bg-primaryHover hover:shadow-lg hover:shadow-primary/20'
+                    : 'bg-surfaceHighlight text-text-muted cursor-not-allowed opacity-50'
+                  }`}
+              >
+                Save & Continue
+              </button>
+            </div>
           </div>
         </div>
       </div>

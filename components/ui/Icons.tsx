@@ -37,7 +37,8 @@ import {
   Wand2,
   Mail,
   Sun,
-  Moon
+  Moon,
+  CheckCircle
 } from 'lucide-react';
 
 export const Icons = {
@@ -79,5 +80,6 @@ export const Icons = {
   Wand2,
   Mail,
   Sun,
-  Moon
+  Moon,
+  CheckCircle
 };

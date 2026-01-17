@@ -98,18 +98,17 @@ export const Features: React.FC = () => {
         <div className="min-h-screen pt-14 md:pt-24 pb-20 container mx-auto px-4 lg:px-8 max-w-[1400px]">
             {/* Hero Section */}
             <div className="text-center max-w-4xl mx-auto mb-24 animate-fade-in">
-               
+
 
                 <h1 className="text-5xl md:text-7xl font-extrabold text-text-primary mb-6 leading-tight">
-                    Everything You Need to Go
+                    Everything You Need
                     <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-500 to-pink-500">
-                        Viral on Social Media
+                        To Go Viral
                     </span>
                 </h1>
 
                 <p className="text-xl text-text-muted leading-relaxed max-w-2xl mx-auto">
-                    SnapKit combines cutting-edge AI vision with social media expertise to transform
-                    your photos into scroll-stopping content across all major platforms.
+                                        Transform your photos into scroll-stopping content for every platform with SnapKit's elite AI vision.
                 </p>
             </div>
 

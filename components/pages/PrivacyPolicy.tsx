@@ -6,7 +6,7 @@ export const PrivacyPolicy: React.FC = () => {
             <div className="space-y-8 animate-fade-in">
                 <div className="mb-12">
                     <h1 className="text-4xl font-bold text-white mb-4">Privacy Policy</h1>
-                    <p className="text-text-muted">Last updated: December 14, 2025</p>
+                    <p className="text-text-muted">Last updated: January 17, 2026</p>
                 </div>
 
                 <section className="space-y-4">

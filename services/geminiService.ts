@@ -1,4 +1,3 @@
-import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { SocialKitConfig, SocialKitResult } from "../types";
 
 // Helper to convert file to base64
@@ -16,87 +15,87 @@ export const fileToGenerativePart = async (file: File): Promise<string> => {
   });
 };
 
-const responseSchema: Schema = {
-  type: Type.OBJECT,
+const responseSchema = {
+  type: "object",
   properties: {
     analysis: {
-      type: Type.OBJECT,
+      type: "object",
       properties: {
-        summary: { type: Type.STRING, description: "Brief visual description of the image" },
-        mood: { type: Type.STRING, description: "The emotional tone of the image" },
-        keywords: { type: Type.ARRAY, items: { type: Type.STRING }, description: "5 key visual elements" }
+        summary: { type: "string", description: "Brief visual description of the image" },
+        mood: { type: "string", description: "The emotional tone of the image" },
+        keywords: { type: "array", items: { type: "string" }, description: "5 key visual elements" }
       },
       required: ["summary", "mood", "keywords"]
     },
     captions: {
-      type: Type.ARRAY,
+      type: "array",
       items: {
-        type: Type.OBJECT,
+        type: "object",
         properties: {
-          platform: { type: Type.STRING, description: "e.g., Instagram, TikTok" },
-          hook: { type: Type.STRING, description: "Attention grabbing opening line (max 10 words)" },
-          text: { type: Type.STRING, description: "Short, punchy caption body (max 2 sentences)" },
-          cta: { type: Type.STRING, description: "Short call to action" }
+          platform: { type: "string", description: "e.g., Instagram, TikTok" },
+          hook: { type: "string", description: "Attention grabbing opening line (max 10 words)" },
+          text: { type: "string", description: "Short, punchy caption body (max 2 sentences)" },
+          cta: { type: "string", description: "Short call to action" }
         },
         required: ["platform", "hook", "text", "cta"]
       }
     },
     hashtags: {
-      type: Type.ARRAY,
+      type: "array",
       items: {
-        type: Type.OBJECT,
+        type: "object",
         properties: {
-          category: { type: Type.STRING, enum: ["Reach (High Vol)", "Niche (Targeted)", "Community (Low Vol)"] },
-          tags: { type: Type.ARRAY, items: { type: Type.STRING } }
+          category: { type: "string", enum: ["Reach (High Vol)", "Niche (Targeted)", "Community (Low Vol)"] },
+          tags: { type: "array", items: { type: "string" } }
         },
         required: ["category", "tags"]
       }
     },
     scripts: {
-      type: Type.OBJECT,
+      type: "object",
       properties: {
         tiktok: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            title: { type: Type.STRING },
-            hook: { type: Type.STRING },
+            title: { type: "string" },
+            hook: { type: "string" },
             scene_breakdown: {
-              type: Type.ARRAY,
+              type: "array",
               items: {
-                type: Type.OBJECT,
+                type: "object",
                 properties: {
-                  timestamp: { type: Type.STRING },
-                  visual: { type: Type.STRING },
-                  audio: { type: Type.STRING }
+                  timestamp: { type: "string" },
+                  visual: { type: "string" },
+                  audio: { type: "string" }
                 }
               }
             },
-            cta: { type: Type.STRING }
+            cta: { type: "string" }
           }
         },
         shorts: {
-          type: Type.OBJECT,
+          type: "object",
           properties: {
-            title: { type: Type.STRING },
-            hook: { type: Type.STRING },
+            title: { type: "string" },
+            hook: { type: "string" },
             scene_breakdown: {
-              type: Type.ARRAY,
+              type: "array",
               items: {
-                type: Type.OBJECT,
+                type: "object",
                 properties: {
-                  timestamp: { type: Type.STRING },
-                  visual: { type: Type.STRING },
-                  audio: { type: Type.STRING }
+                  timestamp: { type: "string" },
+                  visual: { type: "string" },
+                  audio: { type: "string" }
                 }
               }
             },
-            cta: { type: Type.STRING }
+            cta: { type: "string" }
           }
         }
       }
     },
-    linkedin_post: { type: Type.STRING, description: "Professional post for LinkedIn" },
-    twitter_thread: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Array of tweets for a thread" }
+    linkedin_post: { type: "string", description: "Professional post for LinkedIn" },
+    twitter_thread: { type: "array", items: { type: "string" }, description: "Array of tweets for a thread" }
   },
   required: ["analysis", "captions", "hashtags", "scripts", "linkedin_post", "twitter_thread"]
 };
@@ -109,55 +108,56 @@ export const generateContent = async (
 ): Promise<SocialKitResult> => {
   if (!apiKey) throw new Error("API Key is required");
 
-  const ai = new GoogleGenAI({ apiKey });
+  // Raw API call to use the exact model shown in the user's dashboard (2.5-flash)
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { inline_data: { mime_type: mimeType, data: imageBase64 } },
+            { text: "Generate a comprehensive social media kit for this image." }
+          ]
+        }],
+        systemInstruction: {
+          parts: [{
+            text: `You are an expert Social Media Manager and Content Strategist.
+Your goal is to analyze the provided image and generate a complete social media kit.
 
-  const systemInstruction = `
-    You are an expert Social Media Manager and Content Strategist.
-    Your goal is to analyze the provided image and generate a complete social media kit.
-    
-    Configuration:
-    - Tone: ${config.tone}
-    - Include Emojis: ${config.includeEmoji}
-    - Language: ${config.language}
-    
-    IMPORTANT RULES:
-    1. **Captions must be SHORT and EFFECTIVE.** Avoid long paragraphs. Focus on viral hooks and punchy 1-2 sentence bodies.
-    2. **Hooks** must stop the scroll.
-    3. **Video scripts** should be fast-paced.
-    
-    Deliverables:
-    1. Visual analysis of the image.
-    2. 3 distinct caption variations (Instagram, Generic, Story).
-    3. 3 sets of hashtags (High volume, Niche, Community).
-    4. Video scripts for TikTok and YouTube Shorts based on the image context (imagining the image as a thumbnail or keyframe).
-    5. A short and professional LinkedIn post.
-    6. A Twitter/X thread (3-5 tweets).
-  `;
+Configuration:
+- Tone: ${config.tone}
+- Include Emojis: ${config.includeEmoji}
+- Language: ${config.language}
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
-    contents: {
-      parts: [
-        {
-          inlineData: {
-            mimeType: mimeType,
-            data: imageBase64
-          }
+Deliverables:
+1. Visual analysis of the image.
+2. 3 distinct caption variations (Instagram, Generic, Story).
+3. 3 sets of hashtags (High volume, Niche, Community).
+4. Video scripts for TikTok and YouTube Shorts.
+5. A short LinkedIn post and Twitter/X thread.`
+          }]
         },
-        {
-          text: "Generate a comprehensive social media kit for this image."
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: responseSchema
         }
-      ]
-    },
-    config: {
-      systemInstruction: systemInstruction,
-      responseMimeType: "application/json",
-      responseSchema: responseSchema,
-      thinkingConfig: { thinkingBudget: 0 } // Disable thinking for speed on flash model
+      })
     }
-  });
+  );
 
-  const text = response.text;
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const message = errorData.error?.message || "Generation failed";
+    const code = response.status;
+
+    // Throw error with status code so App.tsx can handle rotation
+    throw new Error(`[${code}] ${message}`);
+  }
+
+  const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error("No response generated");
 
   return JSON.parse(text) as SocialKitResult;

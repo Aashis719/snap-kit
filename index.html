@@ -115,6 +115,37 @@
       overflow-x: hidden;
     }
 
+    /* Card Node Glow Effects - Adaptive & High Intensity */
+    .card-node-active {
+      box-shadow: 0 0 30px -5px rgba(59, 130, 246, 0.12);
+      border-color: rgba(59, 130, 246, 0.3) !important;
+      background: white;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: scale(1.002);
+    }
+
+    .dark .card-node-active {
+      box-shadow: 0 0 40px -5px rgba(59, 130, 246, 0.5),
+        inset 0 0 15px rgba(59, 130, 246, 0.2);
+      border-color: rgba(59, 130, 246, 0.8) !important;
+      background: linear-gradient(135deg, rgba(24, 24, 27, 1) 0%, rgba(30, 58, 138, 0.1) 100%);
+      transform: scale(1.01);
+    }
+
+    .card-node-content-active {
+      box-shadow: 0 0 40px -10px rgba(139, 92, 246, 0.12);
+      border-color: rgba(139, 92, 246, 0.3) !important;
+      background: white;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dark .card-node-content-active {
+      box-shadow: 0 0 60px -10px rgba(139, 92, 246, 0.5),
+        inset 0 0 20px rgba(139, 92, 246, 0.2);
+      border-color: rgba(139, 92, 246, 0.8) !important;
+      background: linear-gradient(135deg, rgba(24, 24, 27, 1) 0%, rgba(88, 28, 135, 0.1) 100%);
+    }
+
     /* Selection Vibe - Matching Brand Purple */
     ::selection {
       background: rgba(148, 25, 193, 0.25);
@@ -262,6 +293,22 @@
 
       50% {
         opacity: 1;
+      }
+    }
+
+    .animate-pulse-light {
+      animation: pulse-light 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse-light {
+
+      0%,
+      100% {
+        opacity: 0.2;
+      }
+
+      50% {
+        opacity: 0.6;
       }
     }
   </style>

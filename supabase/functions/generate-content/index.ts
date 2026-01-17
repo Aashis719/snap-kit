@@ -9,6 +9,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0'
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
 }
 
 interface GenerateRequest {
@@ -27,7 +29,10 @@ interface GenerateRequest {
 serve(async (req) => {
     // Handle CORS preflight
     if (req.method === 'OPTIONS') {
-        return new Response('ok', { headers: corsHeaders })
+        return new Response('ok', {
+            status: 200,
+            headers: corsHeaders
+        })
     }
 
     try {
@@ -126,7 +131,7 @@ serve(async (req) => {
 
         // Call Gemini API
         const geminiResponse = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -163,7 +168,7 @@ Deliverables:
 1. Visual analysis of the image.
 2. 3 distinct caption variations (Instagram, Generic, Story).
 3. 3 sets of hashtags (High volume, Niche, Community).
-4. Video scripts for TikTok and YouTube Shorts based on the image context.
+4. Video scripts for TikTok and YouTube Shorts based on the image context (imagining the image as a thumbnail or keyframe).
 5. A short and professional LinkedIn post.
 6. A Twitter/X thread (3-5 tweets).`
                         }]
@@ -176,9 +181,9 @@ Deliverables:
                                 analysis: {
                                     type: "object",
                                     properties: {
-                                        summary: { type: "string" },
-                                        mood: { type: "string" },
-                                        keywords: { type: "array", items: { type: "string" } }
+                                        summary: { type: "string", description: "Brief visual description of the image" },
+                                        mood: { type: "string", description: "The emotional tone of the image" },
+                                        keywords: { type: "array", items: { type: "string" }, description: "5 key visual elements" }
                                     },
                                     required: ["summary", "mood", "keywords"]
                                 },
@@ -187,10 +192,10 @@ Deliverables:
                                     items: {
                                         type: "object",
                                         properties: {
-                                            platform: { type: "string" },
-                                            hook: { type: "string" },
-                                            text: { type: "string" },
-                                            cta: { type: "string" }
+                                            platform: { type: "string", description: "e.g., Instagram, TikTok" },
+                                            hook: { type: "string", description: "Attention grabbing opening line (max 10 words)" },
+                                            text: { type: "string", description: "Short, punchy caption body (max 2 sentences)" },
+                                            cta: { type: "string", description: "Short call to action" }
                                         },
                                         required: ["platform", "hook", "text", "cta"]
                                     }
@@ -200,9 +205,10 @@ Deliverables:
                                     items: {
                                         type: "object",
                                         properties: {
-                                            category: { type: "string" },
+                                            category: { type: "string", enum: ["Reach (High Vol)", "Niche (Targeted)", "Community (Low Vol)"] },
                                             tags: { type: "array", items: { type: "string" } }
-                                        }
+                                        },
+                                        required: ["category", "tags"]
                                     }
                                 },
                                 scripts: {
@@ -213,7 +219,17 @@ Deliverables:
                                             properties: {
                                                 title: { type: "string" },
                                                 hook: { type: "string" },
-                                                scene_breakdown: { type: "array" },
+                                                scene_breakdown: {
+                                                    type: "array",
+                                                    items: {
+                                                        type: "object",
+                                                        properties: {
+                                                            timestamp: { type: "string" },
+                                                            visual: { type: "string" },
+                                                            audio: { type: "string" }
+                                                        }
+                                                    }
+                                                },
                                                 cta: { type: "string" }
                                             }
                                         },
@@ -222,14 +238,24 @@ Deliverables:
                                             properties: {
                                                 title: { type: "string" },
                                                 hook: { type: "string" },
-                                                scene_breakdown: { type: "array" },
+                                                scene_breakdown: {
+                                                    type: "array",
+                                                    items: {
+                                                        type: "object",
+                                                        properties: {
+                                                            timestamp: { type: "string" },
+                                                            visual: { type: "string" },
+                                                            audio: { type: "string" }
+                                                        }
+                                                    }
+                                                },
                                                 cta: { type: "string" }
                                             }
                                         }
                                     }
                                 },
-                                linkedin_post: { type: "string" },
-                                twitter_thread: { type: "array", items: { type: "string" } }
+                                linkedin_post: { type: "string", description: "Professional post for LinkedIn" },
+                                twitter_thread: { type: "array", items: { type: "string" }, description: "Array of tweets for a thread" }
                             },
                             required: ["analysis", "captions", "hashtags", "scripts", "linkedin_post", "twitter_thread"]
                         }

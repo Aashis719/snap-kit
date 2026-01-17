@@ -8,7 +8,8 @@ import { HistorySidebar } from './components/HistorySidebar';
 import { Footer } from './components/Footer';
 import { generateContent, fileToGenerativePart } from './services/geminiService';
 import { uploadImageToCloudinary } from './services/cloudinaryService';
-import { saveGeneration, getUserApiKey, updateUserApiKey } from './services/supabaseService';
+import { saveGeneration, getUserApiKey, updateUserApiKey, getAdminKeyForFreeTier, incrementFreeUsage, getUserFreeGenerationStats } from './services/supabaseService';
+import { VisualFlowConnector } from './components/VisualFlowConnector';
 import { supabase } from './lib/supabase';
 import { AppState, SocialKitConfig } from './types';
 import { Icons } from './components/ui/Icons';
@@ -18,7 +19,8 @@ import { PrivacyPolicy } from './components/pages/PrivacyPolicy';
 import { NotFound } from './components/pages/NotFound';
 import { AuthCallback } from './components/pages/AuthCallback';
 import { ThemeToggle } from './components/ThemeToggle';
-import { Analytics } from '@vercel/analytics/react'; 
+import { FreeGenerationBadge } from './components/FreeGenerationBadge';
+import { Analytics } from '@vercel/analytics/react';
 
 const DEFAULT_CONFIG: SocialKitConfig = {
   tone: 'playful',
@@ -82,15 +84,17 @@ const Content: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Load user's API key from database
+  // Load user's API key and credits from database
   const loadUserApiKey = async (userId: string) => {
     try {
-      const apiKey = await getUserApiKey(userId);
-      if (apiKey) {
-        setState(prev => ({ ...prev, apiKey }));
-      }
+      const stats = await getUserFreeGenerationStats(userId);
+      setState(prev => ({
+        ...prev,
+        apiKey: stats.gemini_api_key || '',
+        creditsRemaining: stats.remaining
+      }));
     } catch (error) {
-      console.error('Failed to load API key:', error);
+      console.error('Failed to load user stats:', error);
     }
   };
 
@@ -127,7 +131,10 @@ const Content: React.FC = () => {
       return;
     }
 
-    if (!state.apiKey) {
+    const hasOwnKey = state.apiKey && state.apiKey.trim() !== '';
+    const hasCredits = (state.creditsRemaining ?? 0) > 0;
+
+    if (!hasOwnKey && !hasCredits) {
       setShowSettings(true);
       return;
     }
@@ -137,34 +144,78 @@ const Content: React.FC = () => {
     try {
       // 1. Upload to Cloudinary
       const uploadResult = await uploadImageToCloudinary(state.imageFile);
-
-      // 2. Convert image to base64 for Gemini (Gemini still needs base64 or a URI it can access, for now base64 is safest client-side)
-      const base64Data = await fileToGenerativePart(state.imageFile);
       const mimeType = state.imageFile.type;
 
-      // 3. Call Gemini API
-      const result = await generateContent(state.apiKey, base64Data, mimeType, state.config);
+      let result: any;
+      let newCredits: number | undefined = state.creditsRemaining;
 
-      // 4. Save to Supabase
-      await saveGeneration(
-        user.id,
-        uploadResult.url,
-        uploadResult.publicId,
-        state.config,
-        result
-      );
+      if (hasOwnKey) {
+        // Use user's own API key directly (unlimited)
+        const base64Data = await fileToGenerativePart(state.imageFile);
+        result = await generateContent(state.apiKey, base64Data, mimeType, state.config);
+
+        await saveGeneration(
+          user.id,
+          uploadResult.url,
+          uploadResult.publicId,
+          state.config,
+          result,
+          { api_key_source: 'user' }
+        );
+      } else {
+        // Use Database-level key rotation (bypasses Edge Function)
+        let retryCount = 0;
+        const maxRetries = 3;
+        let success = false;
+
+        while (retryCount < maxRetries && !success) {
+          try {
+            const { key: adminKey, id: adminKeyId } = await getAdminKeyForFreeTier();
+            const base64Data = await fileToGenerativePart(state.imageFile);
+
+            // Generate content using the admin key (Gemini 2.0 Flash)
+            result = await generateContent(adminKey, base64Data, mimeType, state.config);
+
+            // Save generation record with admin billing details
+            await saveGeneration(
+              user.id,
+              uploadResult.url,
+              uploadResult.publicId,
+              state.config,
+              result,
+              { api_key_source: 'admin', admin_key_id: adminKeyId }
+            );
+
+            // Decrement user's free credits
+            await incrementFreeUsage(user.id);
+            newCredits = (state.creditsRemaining ?? 1) - 1;
+            success = true;
+          } catch (error: any) {
+            // If it's a rate limit/quota error, try the next key automatically
+            if (error.message?.includes('429') || error.message?.includes('quota') || error.message?.includes('limit')) {
+              console.warn(`Key rate limited. Automatically rotating to next key... (Attempt ${retryCount + 1})`);
+              retryCount++;
+              if (retryCount >= maxRetries) throw error;
+              await new Promise(r => setTimeout(r, 300));
+            } else {
+              throw error;
+            }
+          }
+        }
+      }
 
       setState(prev => ({
         ...prev,
         status: 'complete',
-        result
+        result,
+        creditsRemaining: newCredits
       }));
     } catch (err: any) {
       console.error(err);
       setState(prev => ({
         ...prev,
         status: 'error',
-        error: err.message || "Something went wrong. Please check your API key and try again."
+        error: err.message || "Something went wrong. Please check your API key or credits."
       }));
     }
   };
@@ -178,7 +229,8 @@ const Content: React.FC = () => {
     try {
       // Save to database
       await updateUserApiKey(user.id, key);
-      setState(prev => ({ ...prev, apiKey: key }));
+      // Refresh user stats (key and credits)
+      await loadUserApiKey(user.id);
       setShowSettings(false);
     } catch (error) {
       console.error('Failed to save API key:', error);
@@ -225,7 +277,7 @@ const Content: React.FC = () => {
               <Link
                 key={item}
                 to={item === 'Home' ? '/' : `/${item.toLowerCase()}`}
-                className={`text-sm font-medium transition-colors hover:text-primary relative group py-1
+                className={`text-base font-medium transition-colors hover:text-primary relative group py-1
                     ${location.pathname === (item === 'Home' ? '/' : `/${item.toLowerCase()}`)
                     ? 'text-primary'
                     : 'text-text-muted'}`}
@@ -244,6 +296,16 @@ const Content: React.FC = () => {
             </div>
 
             <div className="h-6 w-px bg-border/50 hidden md:block"></div>
+
+            {user && (
+              <div className="hidden sm:block">
+                <FreeGenerationBadge
+                  remaining={state.creditsRemaining ?? 0}
+                  limit={3}
+                  hasOwnKey={!!(state.apiKey && state.apiKey.trim() !== '')}
+                />
+              </div>
+            )}
 
             {user ? (
               <div className="relative user-menu-container">
@@ -320,7 +382,7 @@ const Content: React.FC = () => {
 
             {/* Mobile Actions */}
             <div className="flex items-center gap-3 md:hidden">
-              <ThemeToggle />
+              {/* <ThemeToggle /> */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
                 className="p-2.5 text-text-muted hover:text-primary hover:bg-primary/5 rounded-xl transition-colors border border-transparent hover:border-primary/20"
@@ -343,18 +405,18 @@ const Content: React.FC = () => {
                   {/* Floating Social Icons (Background) */}
                   <div className="absolute top-0 w-full h-full pointer-events-none z-[-1]">
                     {/* Left Side */}
-                    <div className="absolute top-10 left-[5%] opacity-20 dark:opacity-10 animate-float" style={{ animationDelay: '0s' }}>
+                    <div className="absolute md:top-1 md:left-[0.5%] top-20 left-[5%] opacity-20 dark:opacity-10 animate-float" style={{ animationDelay: '0s' }}>
                       <Icons.Instagram className="w-8 h-8 md:w-12 md:h-12 text-pink-500 rotate-12 transform" />
                     </div>
-                    <div className="absolute bottom-20 left-[10%] opacity-20 dark:opacity-10 animate-float" style={{ animationDelay: '2s' }}>
+                    <div className="absolute top-72 md:top-1 right-[6%] md:right-[10%] opacity-20 dark:opacity-10 animate-float" style={{ animationDelay: '2s' }}>
                       <Icons.Linkedin className="w-8 h-8 md:w-10 md:h-10 text-blue-500 -rotate-12 transform" />
                     </div>
 
                     {/* Right Side */}
-                    <div className="absolute top-20 right-[10%] opacity-20 dark:opacity-10 animate-float" style={{ animationDelay: '1.5s' }}>
+                    <div className="absolute top-36 md:top-40 right-[10%] md:right-[15%] opacity-20 dark:opacity-10 animate-float" style={{ animationDelay: '1.5s' }}>
                       <Icons.Video className="w-10 h-10 md:w-14 md:h-14 text-black dark:text-white rotate-6 transform" />
                     </div>
-                    <div className="absolute bottom-10 right-[5%] opacity-20 dark:opacity-10 animate-float" style={{ animationDelay: '3s' }}>
+                    <div className="absolute top-72 md:top-64 right-[76%] md:right-[84%] opacity-20 dark:opacity-10 animate-float" style={{ animationDelay: '3s' }}>
                       <Icons.Twitter className="w-8 h-8 md:w-10 md:h-10 text-blue-400 rotate-[-8deg] transform" />
                     </div>
                   </div>
@@ -378,7 +440,7 @@ const Content: React.FC = () => {
                   </h1>
                   {/* Subtitle */}
                   <p className="text-xl md:text-2xl text-text-muted mb-12 leading-relaxed max-w-3xl mx-auto font-light">
-                     Upload your image and let SnapKit generate scroll-stopping
+                    Upload your image and let SnapKit generate scroll-stopping
                     <span className="text-text-main font-semibold"> captions, hashtags, and scripts</span> for every platform in seconds.
                   </p>
 
@@ -424,7 +486,15 @@ const Content: React.FC = () => {
                           >
                             Get Started Free
                           </button>
-                          <p className="text-xs text-text-muted mt-4">No credit card required • 3 free generations</p>
+                          <p className="text-xs text-text-muted mt-4">
+                            No credit card required • {user ? (
+                              <span className="text-primary font-semibold">
+                                {state.creditsRemaining ?? 0} generations remaining
+                              </span>
+                            ) : (
+                              '3 free generations'
+                            )}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -450,13 +520,17 @@ const Content: React.FC = () => {
 
               {/* Setup Area - Split View for Desktop */}
               {state.imagePreview && (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+                <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start mb-10">
+                  {/* Visual Flow Bridge */}
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden lg:overflow-visible z-10">
+                    <VisualFlowConnector status={state.status} />
+                  </div>
 
                   {/* LEFT COLUMN: Sidebar (Sticky on Desktop) */}
                   <div className="lg:col-span-4 lg:sticky lg:top-24 space-y-6">
 
                     {/* Image Preview Card */}
-                    <div className="bg-surface rounded-2xl shadow-xl border border-surfaceHighlight overflow-hidden group relative">
+                    <div className={`bg-white dark:bg-surface rounded-2xl shadow-xl border border-surfaceHighlight overflow-hidden group relative transition-all duration-500 ${(state.status === 'uploading' || state.status === 'analyzing' || state.status === 'generating') ? 'card-node-active' : ''}`}>
                       <div className="aspect-square relative overflow-hidden bg-black/50">
                         <img
                           src={state.imagePreview}
@@ -476,7 +550,7 @@ const Content: React.FC = () => {
                     </div>
 
                     {/* Config Panel */}
-                    <div className="bg-surface rounded-2xl shadow-xl border border-surfaceHighlight p-6 animate-fade-in-up">
+                    <div className={`bg-white dark:bg-surface rounded-2xl shadow-xl border border-surfaceHighlight p-6 animate-fade-in-up transition-all duration-500 ${(state.status === 'analyzing' || state.status === 'generating') ? 'card-node-active' : ''}`}>
                       <h3 className="font-semibold text-text-main mb-4 flex items-center gap-2">
                         <Icons.Settings className="w-4 h-4 text-primary" /> Configuration
                       </h3>
@@ -492,7 +566,7 @@ const Content: React.FC = () => {
                                 className={`px-3 py-2 rounded-lg text-sm transition-all border
                                       ${state.config.tone === t
                                     ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
-                                    : 'bg-surfaceHighlight text-text-muted border-transparent hover:border-border hover:text-white'
+                                    : 'bg-surfaceHighlight text-text-muted border-transparent hover:border-border hover:text-text-main'
                                   }`}
                               >
                                 {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -511,20 +585,37 @@ const Content: React.FC = () => {
                           </button>
                         </div>
 
+                        {user && (
+                          <div className="pt-4 flex justify-center">
+                            <FreeGenerationBadge
+                              remaining={state.creditsRemaining ?? 0}
+                              limit={3}
+                              hasOwnKey={!!(state.apiKey && state.apiKey.trim() !== '')}
+                            />
+                          </div>
+                        )}
+
                         <button
                           onClick={handleGenerate}
-                          disabled={state.status === 'generating'}
+                          disabled={state.status === 'generating' || state.status === 'complete'}
                           className={`w-full py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all mt-4
                                ${state.status === 'generating'
-                              ? 'bg-surfaceHighlight cursor-not-allowed text-text-muted'
-                              : 'bg-primary hover:bg-primaryHover hover:shadow-primary/25 hover:scale-[1.02]'
+                              ? 'bg-surfaceHighlight cursor-not-allowed text-text-muted shadow-none'
+                              : state.status === 'complete'
+                                ? 'bg-primary/80 text-white  cursor-default shadow-none'
+                                : 'bg-primary hover:bg-primaryHover hover:shadow-primary/25 hover:scale-[1.02]'
                             }
                              `}
                         >
                           {state.status === 'generating' ? (
                             <>
                               <Icons.RefreshCw className="w-5 h-5 animate-spin" />
-                              Generating Magic...
+                              Generating...
+                            </>
+                          ) : state.status === 'complete' ? (
+                            <>
+                              <Icons.CheckCircle className="w-5 h-5" />
+                              Social Kit Ready
                             </>
                           ) : (
                             <>
@@ -546,9 +637,9 @@ const Content: React.FC = () => {
                   </div>
 
                   {/* RIGHT COLUMN: Results Dashboard */}
-                  <div className="lg:col-span-8 animate-fade-in-up space-y-6">
+                  <div className={`lg:col-span-8 animate-fade-in-up space-y-6 transition-all duration-500 ${state.status === 'generating' ? 'card-node-content-active' : ''}`}>
                     {!state.result && state.status === 'generating' && (
-                      <div className="h-full min-h-[500px] flex flex-col items-center justify-center rounded-2xl bg-surface/50">
+                      <div className="h-full min-h-[500px] flex flex-col items-center justify-center rounded-2xl bg-white/40 dark:bg-surface/50 backdrop-blur-sm border border-border/50">
                         <div className="flex flex-col items-center space-y-6">
                           {/* Simple spinner */}
                           <div className="relative w-16 h-16">
@@ -567,8 +658,8 @@ const Content: React.FC = () => {
                     )}
 
                     {!state.result && state.status !== 'generating' && (
-                      <div className="h-full min-h-[400px] flex flex-col items-center justify-center border-2 border-dashed border-surfaceHighlight rounded-2xl bg-surface/50 text-text-muted">
-                        <Icons.Sparkles className="w-12 h-12 text-surfaceHighlight mb-4" />
+                      <div className="h-full min-h-[400px] flex flex-col items-center justify-center border-2 border-dashed border-border/40 rounded-2xl bg-white/20 dark:bg-surface/50 text-text-muted">
+                        <Icons.Sparkles className="w-10 h-10 text-primary mb-4" />
                         <p className="text-lg">Ready to generate content.</p>
                         <p className="text-sm opacity-60">Configure your settings on the left and hit generate.</p>
                       </div>
@@ -724,7 +815,7 @@ const Content: React.FC = () => {
 
         <div className="p-5 border-t border-surfaceHighlight/50 bg-black/20">
           <p className="text-xs text-text-muted text-center">
-            © 2024 SnapKit. All rights reserved.
+            © 2026 SnapKit. All rights reserved.
           </p>
         </div>
       </div>

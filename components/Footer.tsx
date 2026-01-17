@@ -48,11 +48,12 @@ export const Footer: React.FC = () => {
                     </div>
 
                     {/* Quick Links */}
-                    <div className='text-left md:text-center  '>
+                    <div className='text-left md:text-center align-left '>
                         <h4 className="text-sm font-bold text-text-main mb-3">QUICK LINKS</h4>
-                        <ul className="space-y-2 flex flex-col justify-center items-center align-left">
-                            <li>
-                                <Link to="/features" className="text-sm text-text-main/80 hover:text-primary transition-colors">
+                        <ul className="space-y-2 flex flex-col justify-center md:items-center align-left">
+                            <div className="flex flex-col gap-2 text-left w-30">
+                                <li>
+                                <Link to="/features" className="text-sm text-text-main/80 hover:text-primary transition-colors ">
                                     Features
                                 </Link>
                             </li>
@@ -66,14 +67,15 @@ export const Footer: React.FC = () => {
                                     Privacy Policy
                                 </Link>
                             </li>
+                            </div>
                         </ul>
                     </div>
                 </div>
 
                 {/* Bottom Bar - Simplified */}
                 <div className="pt-6 border-t border-border/30">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-text-main/80">
-                        <p>
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-text-main/80 ">
+                        <p className=''>
                             © {currentYear} <span className="text-primary font-medium animate-pulse"><a href="/">SnapKit</a></span>. All rights reserved.
                         </p>
                         <p className="flex items-center gap-1">

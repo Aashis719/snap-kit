@@ -98,7 +98,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
                                     className="absolute top-2 right-2 z-10 w-7 h-7 bg-black/60 hover:bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
                                     title="Delete"
                                 >
-                                    <Icons.X className="w-4 h-4 text-text-primary" />
+                                    <Icons.X className="w-4 h-4 text-white" />
                                 </button>
 
                                 <div
@@ -114,7 +114,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
                                             />
                                         )}
                                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                                            <p className="text-xs text-text-primary font-medium truncate">
+                                            <p className="text-xs text-white font-medium truncate">
                                                 {new Date(item.created_at).toLocaleDateString()}
                                             </p>
                                         </div>

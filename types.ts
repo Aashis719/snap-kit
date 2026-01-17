@@ -50,4 +50,5 @@ export interface AppState {
   result: SocialKitResult | null;
   error: string | null;
   apiKey: string;
+  creditsRemaining?: number;
 }

@@ -6,7 +6,11 @@ export const saveGeneration = async (
     imageUrl: string,
     imagePublicId: string,
     inputs: any,
-    result: SocialKitResult
+    result: SocialKitResult,
+    options?: {
+        api_key_source?: 'admin' | 'user';
+        admin_key_id?: string;
+    }
 ) => {
     // 1. Save Image Record
     const { data: imageData, error: imageError } = await supabase
@@ -28,7 +32,9 @@ export const saveGeneration = async (
             user_id: userId,
             image_id: imageData.id,
             inputs,
-            results: result
+            results: result,
+            api_key_source: options?.api_key_source || 'user',
+            admin_key_id: options?.admin_key_id || null
         });
 
     if (genError) throw genError;
@@ -107,6 +113,26 @@ export const getUserFreeGenerationStats = async (userId: string) => {
         remaining,
         exhaustedAt: data?.free_tier_exhausted_at,
         hasOwnKey,
-        canUseFreeTier: !hasOwnKey && remaining > 0
+        canUseFreeTier: !hasOwnKey && remaining > 0,
+        gemini_api_key: data?.gemini_api_key
     };
+};
+
+/**
+ * V2: Generate content directly using rotated admin keys (Bypasses Edge Function)
+ */
+export const getAdminKeyForFreeTier = async (): Promise<{ key: string; id: string }> => {
+    const { data: adminKey, error } = await supabase.rpc('get_next_admin_key').single() as { data: any; error: any };
+    if (error || !adminKey) {
+        throw new Error('No free generation credits available or service busy. Please try again later.');
+    }
+    return { key: adminKey.api_key, id: adminKey.key_id };
+};
+
+/**
+ * V2: Increment the free generation counter for a user
+ */
+export const incrementFreeUsage = async (userId: string) => {
+    const { error } = await supabase.rpc('increment_free_generation', { user_id_param: userId });
+    if (error) console.error('Failed to increment usage:', error);
 };
