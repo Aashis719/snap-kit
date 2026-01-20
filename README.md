@@ -1,5 +1,9 @@
 # SnapKit - AI-Powered Social Media Content Generator
 
+<div align="center">
+  <img src="public/snap kit.png" alt="SnapKit Banner" width="800">
+</div>
+
 ### Transform Photos into Viral Content ⚡ 
 
 **SnapKit** is an intelligent social media assistant that uses AI to generate content for social media. By analyzing your images, it instantly generates tailored captions, hashtags, and scripts optimized for every major platform.
