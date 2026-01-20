@@ -70,7 +70,6 @@ snapkit/
 ├── lib/                # Utilities
 ├── public/             # Static assets
 ├── supabase_schema.sql # Database schema
-└── setup_admin_keys.sql # Admin API keys setup
 ```
 
 
