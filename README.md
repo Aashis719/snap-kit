@@ -91,7 +91,7 @@ snapkit/
 
 1. **User Signs Up** → Email verification sent 
 2. **User Verifies Email** → Account activated
-3. **User Uploads Image** → Stored in Cloudinary
+3. **User Uploads Image** → Stored securely in Cloudinary
 4. **AI Analyzes Image** → Gemini Vision API
 5. **Content Generated** → Captions, hashtags, scripts for all platforms
 6. **Free Tier** → 3 generations using admin API keys

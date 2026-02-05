@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { supabase } from '../lib/supabase';
 import { getUserHistory, deleteGeneration } from '../services/supabaseService';
 import { Icons } from './ui/Icons';
@@ -109,7 +110,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                                         e.stopPropagation();
                                         setDeleteConfirm(item.id);
                                     }}
-                                    className="absolute top-2 right-2 z-10 w-7 h-7 bg-black/60 hover:bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"
+                                    className="absolute top-2 right-2 z-10 w-7 h-7 bg-black/60 hover:bg-red-500 rounded-full flex items-center justify-center opacity-100 lg:opacity-0  lg:group-hover:opacity-100 transition-all"
                                     title="Delete"
                                 >
                                     <Icons.X className="w-4 h-4 text-white" />
@@ -146,13 +147,13 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             </div>
 
             {/* Delete Confirmation Modal */}
-            {deleteConfirm && (
+            {deleteConfirm && createPortal(
                 <>
                     <div
-                        className="fixed inset-0 bg-black/70 z-[60] backdrop-blur-sm"
+                        className="fixed inset-0 bg-black/70 z-[999] backdrop-blur-sm"
                         onClick={() => setDeleteConfirm(null)}
                     />
-                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] bg-surface border border-surfaceHighlight rounded-2xl p-6 w-80 shadow-2xl">
+                    <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[1000] bg-surface border border-surfaceHighlight rounded-2xl p-6 w-[90%] max-w-[320px] shadow-2xl animate-in fade-in zoom-in duration-200">
                         <div className="text-center space-y-4">
                             <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
                                 <Icons.AlertCircle className="w-6 h-6 text-red-500" />
@@ -165,14 +166,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                                 <button
                                     onClick={() => setDeleteConfirm(null)}
                                     disabled={deleting}
-                                    className="flex-1 px-4 py-2 bg-surfaceHighlight hover:bg-surface text-text-primary rounded-lg transition-colors"
+                                    className="flex-1 px-4 py-2 bg-surfaceHighlight hover:bg-surfaceHighlight/80 text-text-primary rounded-lg transition-colors border border-surfaceHighlight"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={() => handleDelete(deleteConfirm)}
                                     disabled={deleting}
-                                    className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-text-primary rounded-lg transition-colors flex items-center justify-center gap-2"
+                                    className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
                                 >
                                     {deleting ? (
                                         <>
@@ -186,7 +187,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                             </div>
                         </div>
                     </div>
-                </>
+                </>,
+                document.body
             )}
         </>
     );

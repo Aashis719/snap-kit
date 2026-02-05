@@ -18,6 +18,7 @@ interface GenerateProps {
     handleFileSelect: (file: File) => void;
     setState: React.Dispatch<React.SetStateAction<AppState>>;
     setShowAuth: (show: boolean) => void;
+    setShowSettings: (show: boolean) => void;
     creditsRemaining: number | null;
     loadFromHistory: (result: SocialKitResult, imageUrl: string, config?: SocialKitConfig) => void;
 }
@@ -30,10 +31,33 @@ export const Generate: React.FC<GenerateProps> = ({
     handleFileSelect,
     setState,
     setShowAuth,
+    setShowSettings,
     creditsRemaining,
     loadFromHistory
 }) => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+
+    React.useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (!target.closest('.sidebar-profile-container')) {
+                setShowProfileMenu(false);
+            }
+        };
+
+        if (showProfileMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showProfileMenu]);
+
+    const handleSignOut = async () => {
+        const { supabase } = await import('../../lib/supabase');
+        await supabase.auth.signOut();
+        setShowProfileMenu(false);
+        window.location.href = '/';
+    };
 
     return (
         <div className="flex w-full h-full overflow-hidden text-sm md:text-base relative">
@@ -101,21 +125,61 @@ export const Generate: React.FC<GenerateProps> = ({
 
                     {/* Profile Footer */}
                     {user && (
-                        <div className="pt-4 border-t border-surfaceHighlight shrink-0 flex items-center justify-between">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 p-[1px] shrink-0">
-                                    <div className="w-full h-full rounded-full bg-surface flex items-center justify-center">
-                                        <span className="text-xs font-bold text-primary">{user.email?.charAt(0).toUpperCase()}</span>
+                        <div className="pt-4 border-t border-surfaceHighlight shrink-0 relative sidebar-profile-container">
+                            {/* Profile Popup Menu */}
+                            <div className={`absolute bottom-full left-0 mb-2 w-full bg-white dark:bg-surface border border-surfaceHighlight rounded-2xl shadow-2xl p-2 transform transition-all duration-200 origin-bottom z-[60] ${showProfileMenu ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-2 pointer-events-none'}`}>
+                                <div className="px-4 py-3 border-b border-surfaceHighlight mb-2 bg-surfaceHighlight/30 rounded-t-xl -mx-2 -mt-2">
+                                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-1">Account</p>
+                                    <p className="text-xs font-bold text-text-main truncate">{user.email}</p>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <button
+                                        onClick={() => {
+                                            setShowSettings(true);
+                                            setShowProfileMenu(false);
+                                        }}
+                                        className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm font-medium text-text-muted hover:text-text-main hover:bg-surfaceHighlight rounded-xl transition-all group"
+                                    >
+                                        <div className="p-1.5 rounded-lg bg-surfaceHighlight group-hover:bg-primary/10 transition-colors">
+                                            <Icons.Settings className="w-4 h-4 group-hover:text-primary transition-colors" />
+                                        </div>
+                                        Settings
+                                    </button>
+
+                                    <button
+                                        onClick={handleSignOut}
+                                        className="w-full text-left flex items-center gap-3 px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-500/5 rounded-xl transition-all group"
+                                    >
+                                        <div className="p-1.5 rounded-lg bg-red-500/10 group-hover:bg-red-500/20 transition-colors">
+                                            <Icons.LogOut className="w-4 h-4" />
+                                        </div>
+                                        Sign Out
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                                className={`w-full flex items-center justify-between p-2 rounded-xl transition-all hover:bg-surfaceHighlight group ${showProfileMenu ? 'bg-surfaceHighlight' : ''}`}
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 p-[1px] shrink-0">
+                                        <div className="w-full h-full rounded-full bg-surface flex items-center justify-center">
+                                            <span className="text-xs font-bold text-primary">{user.email?.charAt(0).toUpperCase()}</span>
+                                        </div>
+                                    </div>
+                                    <div className="min-w-0 text-left">
+                                        <p className="text-xs font-bold text-text-main truncate">{user.email?.split('@')[0]}</p>
+                                        <p className="text-[10px] text-text-muted truncate">{user.email}</p>
                                     </div>
                                 </div>
-                                <div className="min-w-0">
-                                    <p className="text-xs font-bold text-text-main truncate">{user.email?.split('@')[0]}</p>
-                                    <p className="text-[10px] text-text-muted truncate">{user.email}</p>
+                                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                    <div className="scale-75 origin-right">
+                                        <ThemeToggle />
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="shrink-0 scale-75 origin-right">
-                                <ThemeToggle />
-                            </div>
+                            </button>
                         </div>
                     )}
                 </div>
