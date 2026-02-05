@@ -36,7 +36,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
       <div className="bg-gradient-to-r from-primary to-primaryHover p-6 text-white relative overflow-hidden">
         {/* Subtle texture */}
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-        
+
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold flex items-center gap-2">
@@ -68,8 +68,8 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
             className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all whitespace-nowrap border-b-2
-              ${activeTab === tab.id 
-                ? 'text-primary border-primary bg-primary/5' 
+              ${activeTab === tab.id
+                ? 'text-primary border-primary bg-primary/5'
                 : 'text-text-muted border-transparent hover:text-text-main hover:bg-surfaceHighlight/50'
               }`}
           >
@@ -139,8 +139,8 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
               </div>
               <div className="bg-surface rounded-xl overflow-hidden border border-surfaceHighlight shadow-lg">
                 <div className="p-4 bg-surfaceHighlight/50 border-b border-surfaceHighlight">
-                   <h4 className="font-semibold text-primary">{result.scripts.tiktok.title}</h4>
-                   <p className="text-sm text-text-muted mt-1">Hook: "{result.scripts.tiktok.hook}"</p>
+                  <h4 className="font-semibold text-primary">{result.scripts.tiktok.title}</h4>
+                  <p className="text-sm text-text-muted mt-1">Hook: "{result.scripts.tiktok.hook}"</p>
                 </div>
                 <div className="p-4 space-y-4">
                   {result.scripts.tiktok.scene_breakdown.map((scene, i) => (
@@ -162,15 +162,15 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
             {/* Shorts */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                 <h3 className="text-lg font-bold flex items-center gap-2 text-text-main">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-text-main">
                   <Icons.Youtube className="w-5 h-5 text-red-500" /> YouTube Shorts
                 </h3>
-                 <CopyButton text={`${result.scripts.shorts.title}\n\n${result.scripts.shorts.scene_breakdown.map(s => `[${s.timestamp}] ${s.visual} (Audio: ${s.audio})`).join('\n')}`} />
+                <CopyButton text={`${result.scripts.shorts.title}\n\n${result.scripts.shorts.scene_breakdown.map(s => `[${s.timestamp}] ${s.visual} (Audio: ${s.audio})`).join('\n')}`} />
               </div>
-               <div className="bg-surface rounded-xl overflow-hidden border border-surfaceHighlight shadow-lg">
+              <div className="bg-surface rounded-xl overflow-hidden border border-surfaceHighlight shadow-lg">
                 <div className="p-4 bg-surfaceHighlight/50 border-b border-surfaceHighlight">
-                   <h4 className="font-semibold text-red-400">{result.scripts.shorts.title}</h4>
-                   <p className="text-sm text-text-muted mt-1">Hook: "{result.scripts.shorts.hook}"</p>
+                  <h4 className="font-semibold text-red-400">{result.scripts.shorts.title}</h4>
+                  <p className="text-sm text-text-muted mt-1">Hook: "{result.scripts.shorts.hook}"</p>
                 </div>
                 <div className="p-4 space-y-4">
                   {result.scripts.shorts.scene_breakdown.map((scene, i) => (
@@ -183,7 +183,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
                     </div>
                   ))}
                 </div>
-                 <div className="p-3 bg-surfaceHighlight/30 border-t border-surfaceHighlight text-center text-xs text-red-400 uppercase tracking-widest font-semibold">
+                <div className="p-3 bg-surfaceHighlight/30 border-t border-surfaceHighlight text-center text-xs text-red-400 uppercase tracking-widest font-semibold">
                   CTA: {result.scripts.shorts.cta}
                 </div>
               </div>
@@ -193,21 +193,21 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
 
         {activeTab === 'linkedin' && (
           <div className="max-w-2xl mx-auto">
-             <div className="bg-surface rounded-xl border border-surfaceHighlight shadow-lg p-6">
-                <div className="flex justify-between mb-4">
-                   <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-surfaceHighlight rounded-full animate-pulse-slow"></div>
-                      <div>
-                         <div className="w-24 h-3 bg-surfaceHighlight rounded mb-1"></div>
-                         <div className="w-16 h-2 bg-surfaceHighlight/50 rounded"></div>
-                      </div>
-                   </div>
-                   <CopyButton text={result.linkedin_post} />
+            <div className="bg-surface rounded-xl border border-surfaceHighlight shadow-lg p-6">
+              <div className="flex justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-surfaceHighlight rounded-full animate-pulse-slow"></div>
+                  <div>
+                    <div className="w-24 h-3 bg-surfaceHighlight rounded mb-1"></div>
+                    <div className="w-16 h-2 bg-surfaceHighlight/50 rounded"></div>
+                  </div>
                 </div>
-                <div className="prose prose-sm prose-invert max-w-none whitespace-pre-wrap text-text-main">
-                  {result.linkedin_post}
-                </div>
-             </div>
+                <CopyButton text={result.linkedin_post} />
+              </div>
+              <div className="prose prose-sm prose-invert max-w-none whitespace-pre-wrap text-text-main">
+                {result.linkedin_post}
+              </div>
+            </div>
           </div>
         )}
 
@@ -215,23 +215,23 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
           <div className="max-w-xl mx-auto space-y-4">
             {result.twitter_thread.map((tweet, i) => (
               <div key={i} className="relative pl-8">
-                 {/* Thread line */}
-                 {i < result.twitter_thread.length - 1 && (
-                    <div className="absolute left-3 top-12 bottom-0 w-0.5 bg-surfaceHighlight -mb-4 z-0"></div>
-                 )}
-                 <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-background border border-surfaceHighlight flex items-center justify-center text-xs font-bold text-text-muted z-10">
-                    {i + 1}
-                 </div>
-                 <div className="bg-surface rounded-xl border border-surfaceHighlight p-4 shadow-sm hover:border-primary/30 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                       <div className="flex items-center gap-2">
-                          <div className="font-bold text-sm text-text-main">You</div>
-                          <div className="text-text-muted text-xs">@yourhandle</div>
-                       </div>
-                       <CopyButton text={tweet} />
+                {/* Thread line */}
+                {i < result.twitter_thread.length - 1 && (
+                  <div className="absolute left-3 top-12 bottom-0 w-0.5 bg-surfaceHighlight -mb-4 z-0"></div>
+                )}
+                <div className="absolute left-0 top-0 w-6 h-6 rounded-full bg-background border border-surfaceHighlight flex items-center justify-center text-xs font-bold text-text-muted z-10">
+                  {i + 1}
+                </div>
+                <div className="bg-surface rounded-xl border border-surfaceHighlight p-4 shadow-sm hover:border-primary/30 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="font-bold text-sm text-text-main">You</div>
+                      <div className="text-text-muted text-xs">@yourhandle</div>
                     </div>
-                    <p className="text-text-main text-sm whitespace-pre-wrap">{tweet}</p>
-                 </div>
+                    <CopyButton text={tweet} />
+                  </div>
+                  <p className="text-text-main text-sm whitespace-pre-wrap">{tweet}</p>
+                </div>
               </div>
             ))}
           </div>

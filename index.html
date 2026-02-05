@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark h-full">
 
 <head>
   <meta charset="UTF-8" />
@@ -202,6 +202,16 @@
       z-index: 2147483646;
     }
 
+    /* No scrollbar utility */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
     /* Custom scrollbar for results */
     .custom-scrollbar::-webkit-scrollbar {
       width: 6px;
@@ -344,7 +354,7 @@
 </script>
 </head>
 
-<body class="antialiased min-h-screen">
+<body class="antialiased h-full">
   <!-- Loading Screen -->
   <div id="loading-screen">
     <img src="/snapkit.png" alt="SnapKit" class="loading-logo" />

@@ -51,4 +51,5 @@ export interface AppState {
   error: string | null;
   apiKey: string;
   creditsRemaining?: number;
+  generationProgress: number;
 }

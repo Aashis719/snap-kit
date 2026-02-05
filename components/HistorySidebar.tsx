@@ -2,16 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { getUserHistory, deleteGeneration } from '../services/supabaseService';
 import { Icons } from './ui/Icons';
-import { SocialKitResult } from '../types';
+import { SocialKitResult, SocialKitConfig } from '../types';
 
 interface HistorySidebarProps {
     isOpen: boolean;
-    onClose: () => void;
+    onClose?: () => void;
     userId: string | null;
-    onSelect: (result: SocialKitResult, imageUrl: string) => void;
+    onSelect: (result: SocialKitResult, imageUrl: string, config?: SocialKitConfig) => void;
+    variant?: 'drawer' | 'static';
 }
 
-export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose, userId, onSelect }) => {
+export const HistorySidebar: React.FC<HistorySidebarProps> = ({
+    isOpen,
+    onClose,
+    userId,
+    onSelect,
+    variant = 'drawer'
+}) => {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
@@ -51,36 +58,43 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
 
     return (
         <>
-            {/* Backdrop */}
-            {isOpen && (
+            {/* Backdrop (Only for drawer) */}
+            {variant === 'drawer' && isOpen && (
                 <div
                     className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm transition-opacity"
                     onClick={onClose}
                 />
             )}
 
-            {/* Sidebar */}
-            <div className={`fixed inset-y-0 right-0 w-80 bg-surface border-l border-surfaceHighlight z-50 transform transition-transform duration-300 ease-in-out shadow-2xl ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-                <div className="flex items-center justify-between p-4 border-b border-surfaceHighlight">
-                    <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
-                        <Icons.History className="w-5 h-5 text-text-primary" /> History
-                    </h2>
-                    <button onClick={onClose} className="text-text-muted hover:text-primary transition-colors">
-                        <Icons.X className="w-5 h-5" />
-                    </button>
-                </div>
+            {/* Sidebar Container */}
+            <div className={`
+                ${variant === 'drawer'
+                    ? `fixed inset-y-0 right-0 w-80 bg-surface border-l border-surfaceHighlight z-50 transform transition-transform duration-300 ease-in-out shadow-2xl ${isOpen ? 'translate-x-0' : 'translate-x-full'}`
+                    : 'w-full h-full flex flex-col bg-transparent'
+                }
+            `}>
+                {variant === 'drawer' && (
+                    <div className="flex items-center justify-between p-4 border-b border-surfaceHighlight">
+                        <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
+                            <Icons.History className="w-5 h-5 text-text-primary" /> History
+                        </h2>
+                        <button onClick={onClose} className="text-text-muted hover:text-primary transition-colors">
+                            <Icons.X className="w-5 h-5" />
+                        </button>
+                    </div>
+                )}
 
-                <div className="overflow-y-auto h-[calc(100vh-60px)] p-4 space-y-4">
+                <div className={`overflow-y-auto no-scrollbar ${variant === 'drawer' ? 'h-[calc(100vh-60px)] p-4' : 'flex-1 p-0'} space-y-4`}>
                     {!userId ? (
-                        <div className="text-center text-text-muted mt-10">
+                        <div className="text-center text-text-muted mt-10 px-4">
                             Please sign in to view history.
                         </div>
                     ) : loading ? (
-                        <div className="flex justify-center mt-10 text-text-primary">
+                        <div className="flex justify-center mt-10 text-primary">
                             <Icons.RefreshCw className="w-6 h-6 animate-spin" />
                         </div>
                     ) : history.length === 0 ? (
-                        <div className="text-center text-text-muted mt-10">
+                        <div className="text-center text-text-muted mt-10 px-4">
                             No generations yet.
                         </div>
                     ) : (
@@ -102,7 +116,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
                                 </button>
 
                                 <div
-                                    onClick={() => onSelect(item.results, item.image?.cloudinary_url)}
+                                    onClick={() => onSelect(item.results, item.image?.cloudinary_url, item.inputs)}
                                     className="cursor-pointer"
                                 >
                                     <div className="aspect-video relative bg-black/20">
@@ -114,14 +128,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({ isOpen, onClose,
                                             />
                                         )}
                                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2">
-                                            <p className="text-xs text-white font-medium truncate">
+                                            <p className="text-[10px] text-white font-medium">
                                                 {new Date(item.created_at).toLocaleDateString()}
                                             </p>
                                         </div>
                                     </div>
                                     <div className="p-3">
-                                        <p className="text-xs text-text-muted line-clamp-2">
-                                            {item.results?.analysis?.summary || "No summary available"}
+                                        <p className="text-[10px] leading-relaxed text-text-muted line-clamp-2">
+                                            {item.results?.analysis?.summary || item.results?.captions?.[0]?.body || "AI Content Bundle"}
                                         </p>
                                     </div>
                                 </div>

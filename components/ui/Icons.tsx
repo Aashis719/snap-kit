@@ -38,7 +38,8 @@ import {
   Mail,
   Sun,
   Moon,
-  CheckCircle
+  CheckCircle,
+  Plus
 } from 'lucide-react';
 
 export const Icons = {
@@ -81,5 +82,6 @@ export const Icons = {
   Mail,
   Sun,
   Moon,
-  CheckCircle
+  CheckCircle,
+  Plus
 };
