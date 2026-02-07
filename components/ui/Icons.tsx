@@ -39,7 +39,17 @@ import {
   Sun,
   Moon,
   CheckCircle,
-  Plus
+  Plus,
+  User,
+  Trash2,
+  BarChart3,
+  CreditCard,
+  Activity,
+  ArrowLeft,
+  ShieldCheck,
+  ArrowUpRight,
+  AlertTriangle,
+  Save
 } from 'lucide-react';
 
 export const Icons = {
@@ -83,5 +93,15 @@ export const Icons = {
   Sun,
   Moon,
   CheckCircle,
-  Plus
+  Plus,
+  User,
+  Trash2,
+  BarChart3,
+  CreditCard,
+  Activity,
+  ArrowLeft,
+  ShieldCheck,
+  ArrowUpRight,
+  AlertTriangle,
+  Save
 };

@@ -16,6 +16,7 @@ import { Icons } from './components/ui/Icons';
 import { Features } from './components/pages/Features';
 import { About } from './components/pages/About';
 import { Generate } from './components/pages/Generate';
+import { Profile } from './components/pages/Profile';
 import { PrivacyPolicy } from './components/pages/PrivacyPolicy';
 import { NotFound } from './components/pages/NotFound';
 import { AuthCallback } from './components/pages/AuthCallback';
@@ -68,8 +69,10 @@ const Content: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
   useEffect(() => {
     const { imagePreview, config, result, status } = state;
@@ -97,6 +100,7 @@ const Content: React.FC = () => {
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      setAuthInitialized(true);
       // Load API key from database if user is logged in
       if (session?.user) {
         loadUserApiKey(session.user.id);
@@ -136,6 +140,7 @@ const Content: React.FC = () => {
       setState(prev => ({
         ...prev,
         apiKey: stats.gemini_api_key || '',
+        fullName: stats.full_name || '',
         creditsRemaining: stats.remaining
       }));
     } catch (error) {
@@ -277,6 +282,7 @@ const Content: React.FC = () => {
       }
 
       clearInterval(progressInterval);
+      setHistoryRefreshKey(prev => prev + 1);
       setState(prev => ({
         ...prev,
         status: 'complete',
@@ -317,25 +323,26 @@ const Content: React.FC = () => {
     }
   };
 
-  const loadFromHistory = (result: any, imageUrl: string, config?: SocialKitConfig) => {
+  const loadFromHistory = (result: any, imageUrl: string, config?: SocialKitConfig, generationId?: string) => {
     setState(prev => ({
       ...prev,
       result,
       imagePreview: imageUrl,
       config: config || prev.config,
-      status: 'complete'
+      status: 'complete',
+      currentId: generationId
     }));
     setShowHistory(false);
     navigate('/generate');
   };
 
   return (
-    <div className={`bg-background text-text-main relative flex flex-col ${location.pathname === '/generate' ? 'h-screen overflow-hidden' : 'min-h-screen pb-10 md:pb-5'}`}>
+    <div className={`w-full max-w-full overflow-x-hidden bg-background text-text-main relative flex flex-col ${location.pathname.startsWith('/generate') ? 'h-screen' : 'min-h-screen pb-10 md:pb-5'}`}>
       {/* Background Grid Pattern */}
       <div className="absolute inset-0 z-0 bg-grid-pattern pointer-events-none fixed"></div>
 
       {/* Pro Full-Width Sticky Header */}
-      {location.pathname !== '/generate' && (
+      {!location.pathname.startsWith('/generate') && (
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl transition-all duration-300 supports-[backdrop-filter]:bg-background/60">
           <div className="container mx-auto px-4 lg:px-6 h-16 md:h-20 flex items-center justify-between max-w-7xl">
             {/* Logo Section */}
@@ -392,7 +399,9 @@ const Content: React.FC = () => {
                   >
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 p-[1px]">
                       <div className="w-full h-full rounded-full bg-surface flex items-center justify-center">
-                        <span className="text-xs font-bold text-primary">{user.email?.charAt(0).toUpperCase()}</span>
+                        <span className="text-xs font-bold text-primary">
+                          {(state.fullName || user.email || "").charAt(0).toUpperCase()}
+                        </span>
                       </div>
                     </div>
                     <Icons.ChevronRight className={`w-4 h-4 text-text-muted transition-transform duration-300 ${showProfileMenu ? 'rotate-90' : 'rotate-0'}`} />
@@ -430,6 +439,17 @@ const Content: React.FC = () => {
                         </div>
                         Settings
                       </button>
+
+                      <Link
+                        to="/profile"
+                        onClick={() => setShowProfileMenu(false)}
+                        className="w-full text-left flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-text-muted hover:text-text-main hover:bg-surfaceHighlight/50 rounded-xl transition-all group"
+                      >
+                        <div className="p-1.5 rounded-lg bg-surfaceHighlight group-hover:bg-primary/10 transition-colors">
+                          <Icons.User className="w-4 h-4 group-hover:text-primary transition-colors" />
+                        </div>
+                        Profile
+                      </Link>
                     </div>
 
                     <div className="mt-2 pt-2 border-t border-border/40">
@@ -472,7 +492,7 @@ const Content: React.FC = () => {
           </div>
         </header>
       )}
-      <main className={`${location.pathname === '/generate' ? 'flex-1 w-full overflow-hidden relative z-10' : 'flex-grow container mx-auto px-4 lg:px-8 pt-8 lg:pt-10 max-w-[1600px] relative z-10 w-full'}`}>
+      <main className={`w-full max-w-full overflow-x-hidden ${location.pathname.startsWith('/generate') ? 'flex-1 relative z-10' : 'flex-grow container mx-auto px-4 lg:px-8 pt-8 lg:pt-10 max-w-[1600px] relative z-10'}`}>
         <Routes>
           <Route path="/" element={
             <>
@@ -579,6 +599,7 @@ const Content: React.FC = () => {
                     <div className="text-sm text-text-muted">Platforms Supported</div>
                   </div>
                   <div className="text-center">
+                  
                     <div className="text-3xl font-bold text-text-main mb-1">&lt;15s</div>
                     <div className="text-sm text-text-muted">Average Generation</div>
                   </div>
@@ -598,13 +619,21 @@ const Content: React.FC = () => {
               setShowSettings={setShowSettings}
               creditsRemaining={state.creditsRemaining ?? 0}
               loadFromHistory={loadFromHistory}
+              historyRefreshKey={historyRefreshKey}
+            />
+          } />
+          <Route path="/profile" element={
+            <Profile
+              user={user}
+              authInitialized={authInitialized}
+              setShowAuth={setShowAuth}
+              onUpdateProfile={() => user && loadUserApiKey(user.id)}
             />
           } />
           <Route path="/features" element={<Features />} />
           <Route path="/about" element={<About />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/scan" element={<ScanTest />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
@@ -627,11 +656,25 @@ const Content: React.FC = () => {
         onClose={() => setShowHistory(false)}
         userId={user?.id}
         onSelect={loadFromHistory}
+        currentId={state.currentId}
+        onClear={handleClear}
+        refreshKey={historyRefreshKey}
       />
       <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
 
       {/* Footer */}
-      {location.pathname !== '/generate' && <Footer />}
+      {!location.pathname.startsWith('/generate') && <Footer />}
+
+      {/* Floating Action Button - Global (except /generate) */}
+      {!location.pathname.startsWith('/generate') && (
+        <Link
+          to="/generate"
+          className="fixed bottom-8 right-8 w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 text-white rounded-full shadow-2xl shadow-primary/30 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 z-[100] group"
+          title="New Generation"
+        >
+          <Icons.Plus className="w-7 h-7 group-hover:rotate-90 transition-transform duration-300" />
+        </Link>
+      )}
 
       {/* Mobile Navigation Sidebar */}
       {/* Backdrop */}

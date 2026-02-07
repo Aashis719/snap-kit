@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { getUserHistory, deleteGeneration } from '../services/supabaseService';
 import { Icons } from './ui/Icons';
@@ -9,8 +10,11 @@ interface HistorySidebarProps {
     isOpen: boolean;
     onClose?: () => void;
     userId: string | null;
-    onSelect: (result: SocialKitResult, imageUrl: string, config?: SocialKitConfig) => void;
+    onSelect: (result: SocialKitResult, imageUrl: string, config?: SocialKitConfig, generationId?: string) => void;
     variant?: 'drawer' | 'static';
+    refreshKey?: number;
+    currentId?: string;
+    onClear?: () => void;
 }
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
@@ -18,7 +22,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     onClose,
     userId,
     onSelect,
-    variant = 'drawer'
+    variant = 'drawer',
+    refreshKey = 0,
+    currentId,
+    onClear
 }) => {
     const [history, setHistory] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -29,7 +36,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         if (isOpen && userId) {
             loadHistory();
         }
-    }, [isOpen, userId]);
+    }, [isOpen, userId, refreshKey]);
 
     const loadHistory = async () => {
         if (!userId) return;
@@ -44,12 +51,20 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         }
     };
 
+    const navigate = useNavigate();
+
     const handleDelete = async (id: string) => {
         setDeleting(true);
         try {
             await deleteGeneration(id);
             setHistory(prev => prev.filter(item => item.id !== id));
             setDeleteConfirm(null);
+
+            // Clear and navigate to fresh page
+            if (onClear) {
+                onClear();
+            }
+            navigate('/generate');
         } catch (error) {
             console.error('Error deleting generation:', error);
         } finally {
@@ -91,8 +106,16 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                             Please sign in to view history.
                         </div>
                     ) : loading ? (
-                        <div className="flex justify-center mt-10 text-primary">
-                            <Icons.RefreshCw className="w-6 h-6 animate-spin" />
+                        <div className="space-y-4 animate-in fade-in duration-500">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="bg-surfaceHighlight rounded-xl overflow-hidden border border-transparent">
+                                    <div className="aspect-video bg-gradient-to-br from-white/5 to-white/10 animate-pulse" />
+                                    <div className="p-3 space-y-2">
+                                        <div className="h-2 bg-white/5 rounded-full w-full animate-pulse" />
+                                        <div className="h-2 bg-white/5 rounded-full w-2/3 animate-pulse" />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     ) : history.length === 0 ? (
                         <div className="text-center text-text-muted mt-10 px-4">
@@ -117,7 +140,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                                 </button>
 
                                 <div
-                                    onClick={() => onSelect(item.results, item.image?.cloudinary_url, item.inputs)}
+                                    onClick={() => onSelect(item.results, item.image?.cloudinary_url, item.inputs, item.id)}
                                     className="cursor-pointer"
                                 >
                                     <div className="aspect-video relative bg-black/20">

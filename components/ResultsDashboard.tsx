@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SocialKitResult } from '../types';
 import { Icons } from './ui/Icons';
 
 interface ResultsDashboardProps {
   result: SocialKitResult;
+  user?: any;
+  fullName?: string;
 }
 
 const CopyButton: React.FC<{ text: string }> = ({ text }) => {
@@ -27,8 +29,97 @@ const CopyButton: React.FC<{ text: string }> = ({ text }) => {
   );
 };
 
-export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) => {
+const tabs = [
+  { id: 'captions' as const, label: 'Captions', icon: Icons.Instagram },
+  { id: 'hashtags' as const, label: 'Hashtags', icon: Icons.Hash },
+  { id: 'scripts' as const, label: 'Video Scripts', icon: Icons.Video },
+  { id: 'linkedin' as const, label: 'LinkedIn', icon: Icons.Linkedin },
+  { id: 'twitter' as const, label: 'Twitter Thread', icon: Icons.Twitter },
+] as const;
+
+export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, user, fullName: propFullName }) => {
   const [activeTab, setActiveTab] = useState<'captions' | 'hashtags' | 'scripts' | 'linkedin' | 'twitter'>('captions');
+  const userDisplayName = propFullName || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Member';
+
+  const [containerHeight, setContainerHeight] = useState<number | string>('auto');
+
+  const scrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const tabsHeaderRef = React.useRef<HTMLDivElement>(null);
+  const sectionRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+
+  const suppressScrollSync = React.useRef(false);
+  const isSwiping = React.useRef(false);
+
+  // Function to update the container height based on the active section
+  const updateHeight = () => {
+    const index = tabs.findIndex(t => t.id === activeTab);
+    const activeSection = sectionRefs.current[index];
+    if (activeSection) {
+      setContainerHeight(activeSection.scrollHeight);
+    }
+  };
+
+  // Update height when tab changes or window resizes
+  useEffect(() => {
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, [activeTab, result]);
+
+  // Handle tab clicks with suppression of the scroll listener to prevent glitchy feedback
+  const handleTabClick = (tabId: typeof activeTab) => {
+    if (activeTab === tabId) return;
+
+    isSwiping.current = false;
+    suppressScrollSync.current = true;
+    setActiveTab(tabId as any);
+
+    // Recovery timeout for scroll listener
+    setTimeout(() => {
+      suppressScrollSync.current = false;
+    }, 600);
+  };
+
+  // Sync scroll position when tab is clicked or swiped
+  useEffect(() => {
+    // 1. Sync Content Container (ONLY for Tab Clicks)
+    if (scrollContainerRef.current && !isSwiping.current) {
+      const index = tabs.findIndex(t => t.id === activeTab);
+      const container = scrollContainerRef.current;
+
+      container.scrollTo({
+        left: container.offsetWidth * index,
+        behavior: 'smooth'
+      });
+    }
+
+    // 2. Sync Tabs Header (ALWAYS)
+    if (tabsHeaderRef.current) {
+      const activeTabElement = tabsHeaderRef.current.querySelector(`[data-tab-id="${activeTab}"]`);
+      if (activeTabElement) {
+        activeTabElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        });
+      }
+    }
+
+    isSwiping.current = false;
+  }, [activeTab]);
+
+  // Handle manual swipe/scroll
+  const handleScroll = () => {
+    if (scrollContainerRef.current && !suppressScrollSync.current) {
+      const container = scrollContainerRef.current;
+      const index = Math.round(container.scrollLeft / container.offsetWidth);
+      const newTab = tabs[index]?.id;
+      if (newTab && newTab !== activeTab) {
+        isSwiping.current = true;
+        setActiveTab(newTab as any);
+      }
+    }
+  };
 
   return (
     <div className="bg-surface rounded-2xl shadow-2xl border border-surfaceHighlight overflow-hidden w-full mx-auto animate-fade-in-up">
@@ -55,33 +146,44 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-surfaceHighlight overflow-x-auto bg-surfaceHighlight/30">
-        {[
-          { id: 'captions', label: 'Captions', icon: Icons.Instagram },
-          { id: 'hashtags', label: 'Hashtags', icon: Icons.Hash },
-          { id: 'scripts', label: 'Video Scripts', icon: Icons.Video },
-          { id: 'linkedin', label: 'LinkedIn', icon: Icons.Linkedin },
-          { id: 'twitter', label: 'Twitter Thread', icon: Icons.Twitter },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all whitespace-nowrap border-b-2
-              ${activeTab === tab.id
-                ? 'text-primary border-primary bg-primary/5'
-                : 'text-text-muted border-transparent hover:text-text-main hover:bg-surfaceHighlight/50'
-              }`}
-          >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
-          </button>
-        ))}
+      {/* Tabs - Carousel on mobile */}
+      <div className="relative border-b border-surfaceHighlight bg-surfaceHighlight/30">
+        <div
+          ref={tabsHeaderRef}
+          className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory"
+        >
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              data-tab-id={tab.id}
+              onClick={() => handleTabClick(tab.id as any)}
+              className={`flex items-center gap-2 px-6 py-4 text-sm font-medium transition-all whitespace-nowrap border-b-2 shrink-0 snap-start
+                ${activeTab === tab.id
+                  ? 'text-primary border-primary bg-primary/5'
+                  : 'text-text-muted border-transparent hover:text-text-main hover:bg-surfaceHighlight/50'
+                }`}
+            >
+              <tab.icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {/* Mobile scroll indicator gradient */}
+        <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-surfaceHighlight/50 to-transparent pointer-events-none md:hidden"></div>
       </div>
 
-      {/* Content */}
-      <div className="p-6 min-h-[400px] bg-background/50">
-        {activeTab === 'captions' && (
+      {/* Scrollable Content Area */}
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        style={{ height: containerHeight, transition: 'height 0.3s ease-in-out' }}
+        className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar bg-background/50 touch-pan-x items-start overflow-y-hidden"
+      >
+        {/* Captions Section */}
+        <div
+          ref={el => { sectionRefs.current[0] = el; }}
+          className="w-full shrink-0 snap-center p-6"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {result.captions.map((cap, idx) => (
               <div key={idx} className="bg-surface rounded-xl p-5 border border-surfaceHighlight flex flex-col h-full hover:border-primary/30 transition-colors shadow-lg shadow-black/20">
@@ -104,9 +206,13 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
               </div>
             ))}
           </div>
-        )}
+        </div>
 
-        {activeTab === 'hashtags' && (
+        {/* Hashtags Section */}
+        <div
+          ref={el => { sectionRefs.current[1] = el; }}
+          className="w-full shrink-0 snap-center p-6"
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {result.hashtags.map((set, idx) => (
               <div key={idx} className="bg-surface rounded-xl p-5 border border-surfaceHighlight hover:border-primary/30 transition-colors shadow-lg">
@@ -125,9 +231,13 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
               </div>
             ))}
           </div>
-        )}
+        </div>
 
-        {activeTab === 'scripts' && (
+        {/* Scripts Section */}
+        <div
+          ref={el => { sectionRefs.current[2] = el; }}
+          className="w-full shrink-0 snap-center p-6"
+        >
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {/* TikTok */}
             <div className="space-y-4">
@@ -189,29 +299,38 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
               </div>
             </div>
           </div>
-        )}
+        </div>
 
-        {activeTab === 'linkedin' && (
+        {/* LinkedIn Section */}
+        <div
+          ref={el => { sectionRefs.current[3] = el; }}
+          className="w-full shrink-0 snap-center p-6"
+        >
           <div className="max-w-2xl mx-auto">
             <div className="bg-surface rounded-xl border border-surfaceHighlight shadow-lg p-6">
               <div className="flex justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-surfaceHighlight rounded-full animate-pulse-slow"></div>
+                  <div className="w-10 h-10 bg-primary/10 flex items-center justify-center rounded-full border border-primary/20">
+                    <span className="text-primary font-bold uppercase">{userDisplayName[0]}</span>
+                  </div>
                   <div>
-                    <div className="w-24 h-3 bg-surfaceHighlight rounded mb-1"></div>
-                    <div className="w-16 h-2 bg-surfaceHighlight/50 rounded"></div>
+                    <div className="font-bold text-sm text-text-main leading-tight">{userDisplayName}</div>
                   </div>
                 </div>
                 <CopyButton text={result.linkedin_post} />
-              </div>
+              </div> 
               <div className="prose prose-sm prose-invert max-w-none whitespace-pre-wrap text-text-main">
                 {result.linkedin_post}
               </div>
             </div>
           </div>
-        )}
+        </div>
 
-        {activeTab === 'twitter' && (
+        {/* Twitter Section */}
+        <div
+          ref={el => { sectionRefs.current[4] = el; }}
+          className="w-full shrink-0 snap-center p-6"
+        >
           <div className="max-w-xl mx-auto space-y-4">
             {result.twitter_thread.map((tweet, i) => (
               <div key={i} className="relative pl-8">
@@ -225,8 +344,13 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
                 <div className="bg-surface rounded-xl border border-surfaceHighlight p-4 shadow-sm hover:border-primary/30 transition-colors">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="font-bold text-sm text-text-main">You</div>
-                      <div className="text-text-muted text-xs">@yourhandle</div>
+                      <div className="w-8 h-8 bg-primary/10 flex items-center justify-center rounded-full border border-primary/20">
+                        <span className="text-primary text-xs font-bold uppercase">{userDisplayName[0]}</span>
+                      </div>
+                      <div>
+                        <div className="font-bold text-sm text-text-main leading-none mb-0.5">{userDisplayName}</div>
+                        <div className="text-text-muted text-xs leading-none">@{userDisplayName.toLowerCase().replace(/\s+/g, '')}</div>
+                      </div>
                     </div>
                     <CopyButton text={tweet} />
                   </div>
@@ -235,7 +359,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result }) =>
               </div>
             ))}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

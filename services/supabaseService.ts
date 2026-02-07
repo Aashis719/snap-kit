@@ -55,12 +55,21 @@ export const getUserHistory = async (userId: string) => {
 };
 
 export const deleteGeneration = async (generationId: string) => {
-    const { error } = await supabase
-        .from('generations')
-        .delete()
-        .eq('id', generationId);
+    const { data, error } = await supabase.functions.invoke('delete-cloudinary-image', {
+        body: { generationId }
+    });
 
-    if (error) throw error;
+    if (error) {
+        console.error('Edge function error:', error);
+        // Fallback: regular delete if function is not deployed or fails
+        const { error: dbError } = await supabase
+            .from('generations')
+            .delete()
+            .eq('id', generationId);
+        if (dbError) throw dbError;
+    }
+
+    return data;
 };
 
 /**
@@ -98,7 +107,7 @@ export const updateUserApiKey = async (userId: string, apiKey: string): Promise<
 export const getUserFreeGenerationStats = async (userId: string) => {
     const { data, error } = await supabase
         .from('profiles')
-        .select('free_generations_used, free_generations_limit, free_tier_exhausted_at, gemini_api_key')
+        .select('free_generations_used, free_generations_limit, free_tier_exhausted_at, gemini_api_key, full_name')
         .eq('id', userId)
         .single();
 
@@ -114,7 +123,8 @@ export const getUserFreeGenerationStats = async (userId: string) => {
         exhaustedAt: data?.free_tier_exhausted_at,
         hasOwnKey,
         canUseFreeTier: !hasOwnKey && remaining > 0,
-        gemini_api_key: data?.gemini_api_key
+        gemini_api_key: data?.gemini_api_key,
+        full_name: data?.full_name
     };
 };
 
@@ -135,4 +145,65 @@ export const getAdminKeyForFreeTier = async (): Promise<{ key: string; id: strin
 export const incrementFreeUsage = async (userId: string) => {
     const { error } = await supabase.rpc('increment_free_generation', { user_id_param: userId });
     if (error) console.error('Failed to increment usage:', error);
+};
+
+/**
+ * Get the full profile data for the current user
+ */
+export const getUserProfile = async (userId: string) => {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+/**
+ * Update user profile fields (like full_name)
+ */
+export const updateUserProfile = async (userId: string, updates: { full_name?: string }) => {
+    const { error } = await supabase
+        .from('profiles')
+        .update({
+            ...updates,
+            updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+    if (error) throw error;
+};
+
+/**
+ * Delete account data
+ * Note: Direct auth.users deletion requires service role.
+ * This deletes the profile and all related data (via cascade).
+ */
+export const deleteAccount = async (userId: string) => {
+    // Delete profile (will cascade to images, generations, etc.)
+    const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+    if (error) throw error;
+
+    // Sign out the user
+    await supabase.auth.signOut();
+};
+
+/**
+ * Get detailed user statistics from the view
+ */
+export const getUserStats = async (userId: string) => {
+    const { data, error } = await supabase
+        .from('user_generation_stats')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+    if (error) throw error;
+    return data;
 };

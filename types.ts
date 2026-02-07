@@ -48,8 +48,10 @@ export interface AppState {
   imagePreview: string | null;
   config: SocialKitConfig;
   result: SocialKitResult | null;
+  currentId?: string;
   error: string | null;
   apiKey: string;
+  fullName?: string;
   creditsRemaining?: number;
   generationProgress: number;
 }
