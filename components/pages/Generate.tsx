@@ -221,12 +221,12 @@ export const Generate: React.FC<GenerateProps> = ({
                     </button>
                 </div>
 
-                <div className="w-full max-w-6xl mx-auto p-4 md:p-8 lg:p-12">
+                <div className="w-full max-w-5xl mx-auto py-8">
                     {state.imagePreview ? (
-                        <div className="space-y-6 md:space-y-8 animate-fade-in">
+                        <div className="animate-fade-in flex flex-col items-center w-full">
 
                             {/* Top Row: Scanner + Config */}
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 items-start px-4 relative">
                                 {/* Scanner View */}
                                 <div className="z-10 relative">
                                     <Scanner
@@ -235,28 +235,28 @@ export const Generate: React.FC<GenerateProps> = ({
                                         onClear={handleClear}
                                         progress={state.generationProgress}
                                     />
+                                </div>
 
-                                    {/* Visual Connection Effect - Hidden on mobile/tablet to prevent overflow */}
-                                    <div className="hidden xl:block absolute top-1/2 -right-10 w-12 h-full pointer-events-none transform -translate-y-1/2 overflow-visible">
-                                        <VisualCombiningEffect isGenerating={state.status === 'generating'} />
-                                    </div>
+                                {/* Visual Connection Wire (Desktop) */}
+                                <div className="hidden xl:flex items-center justify-center h-full absolute left-1/2 top-0 bottom-0 -ml-6 pointer-events-none z-0">
+                                    <VisualCombiningEffect isGenerating={state.status === 'generating'} />
                                 </div>
 
                                 {/* Config Panel */}
-                                <div className={`bg-white dark:bg-surface rounded-2xl shadow-xl border border-surfaceHighlight p-6 z-10 transition-all duration-500 ${(state.status === 'analyzing' || state.status === 'generating') ? 'card-node-active' : ''}`}>
-                                    <h3 className="font-semibold text-text-main mb-6 flex items-center gap-2">
+                                <div className={`bg-white dark:bg-surface rounded-2xl shadow-xl border border-surfaceHighlight p-4 z-10 transition-all duration-500 ${(state.status === 'analyzing' || state.status === 'generating') ? 'card-node-active' : ''}`}>
+                                    <h3 className="text-sm font-semibold text-text-main mb-4 flex items-center gap-2">
                                         <Icons.Settings className="w-4 h-4 text-primary" /> Configuration
                                     </h3>
 
-                                    <div className="space-y-8">
+                                    <div className="space-y-5">
                                         <div>
-                                            <label className="text-xs font-medium text-text-muted uppercase tracking-wider block mb-3">Tone of Voice</label>
+                                            <label className="text-xs font-medium text-text-muted uppercase tracking-wider block mb-2">Tone of Voice</label>
                                             <div className="flex flex-wrap gap-2">
                                                 {['playful', 'professional', 'minimal', 'inspirational', 'funny'].map((t) => (
                                                     <button
                                                         key={t}
                                                         onClick={() => setState(prev => ({ ...prev, config: { ...prev.config, tone: t as any } }))}
-                                                        className={`px-3 py-2 rounded-lg text-sm transition-all border
+                                                        className={`px-3 py-1.5 rounded-lg text-xs transition-all border
                                               ${state.config.tone === t
                                                                 ? 'bg-primary text-white border-primary shadow-lg shadow-primary/20'
                                                                 : 'bg-surfaceHighlight text-text-muted border-transparent hover:border-border hover:text-text-main'
@@ -269,7 +269,7 @@ export const Generate: React.FC<GenerateProps> = ({
                                         </div>
 
                                         <div className="flex items-center justify-between pt-2 border-t border-surfaceHighlight">
-                                            <label className="text-sm font-medium text-text-muted">Include Emojis</label>
+                                            <label className="text-xs font-medium text-text-muted">Include Emojis</label>
                                             <button
                                                 onClick={() => setState(prev => ({ ...prev, config: { ...prev.config, includeEmoji: !prev.config.includeEmoji } }))}
                                                 className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ${state.config.includeEmoji ? 'bg-accent' : 'bg-surfaceHighlight'}`}
@@ -321,6 +321,11 @@ export const Generate: React.FC<GenerateProps> = ({
                                 </div>
                             </div>
 
+                            {/* Vertical Connector Wire (Config -> Results) */}
+                            <div className="w-full flex justify-center -my-6 relative z-0 animate-fade-in">
+                                <VisualCombiningEffect isGenerating={state.status === 'generating'} vertical={true} />
+                            </div>
+
                             {/* Error Message */}
                             {state.error && (
                                 <div className="bg-red-500/10 text-red-400 p-4 rounded-xl border border-red-500/20 flex items-start gap-3 animate-fade-in">
@@ -330,7 +335,7 @@ export const Generate: React.FC<GenerateProps> = ({
                             )}
 
                             {/* Results Section */}
-                            <div className={`w-full max-w-full transition-all duration-500 ${state.status === 'generating' ? 'opacity-80' : ''}`}>
+                            <div className={`w-full max-w-full mt-4 relative z-10 transition-all duration-500 ${state.status === 'generating' ? 'opacity-80' : ''}`}>
                                 {!state.result && state.status === 'generating' ? (
                                     <div className="bg-white dark:bg-surface rounded-2xl shadow-xl border border-surfaceHighlight overflow-hidden animate-pulse">
                                         {/* Skeleton Header */}
@@ -410,17 +415,17 @@ export const Generate: React.FC<GenerateProps> = ({
                         </div>
                     )}
                 </div>
-               
-                        <Link
-                          to="/"
-                          className="fixed bottom-8 right-8 w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 text-white rounded-full shadow-2xl shadow-primary/30 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 z-[100] group"
-                          title="Home"
-                        >
-                          <Icons.Home className="w-7 h-7" />
-                        </Link>
-                      
-            </main>
-        </div>
+
+                <Link
+                    to="/"
+                    className="fixed bottom-8 right-8 w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 text-white rounded-full shadow-2xl shadow-primary/30 flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 z-[100] group"
+                    title="Home"
+                >
+                    <Icons.Home className="w-7 h-7" />
+                </Link>
+
+            </main >
+        </div >
     );
 
 };

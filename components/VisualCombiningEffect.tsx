@@ -2,30 +2,16 @@ import React, { useMemo } from 'react';
 
 interface VisualCombiningEffectProps {
     isGenerating: boolean;
+    vertical?: boolean;
 }
 
-export const VisualCombiningEffect: React.FC<VisualCombiningEffectProps> = ({ isGenerating }) => {
-    // Generate some random paths for "wires"
-    const wires = useMemo(() => {
-        return Array.from({ length: 5 }).map((_, i) => {
-            const yStart = 30 + i * 10; // Start points spread out
-            const yEnd = 40 + (i % 3) * 10; // End points spread out
-            const controlPointX1 = 30 + Math.random() * 20;
-            const controlPointX2 = 50 + Math.random() * 20;
-
-            return {
-                id: i,
-                d: `M 0,${yStart} C ${controlPointX1},${yStart} ${controlPointX2},${yEnd} 100,${yEnd}`,
-                delay: i * 0.3,
-                duration: 1.5 + Math.random() * 1
-            };
-        });
-    }, []);
-
-    if (!isGenerating) return null;
+export const VisualCombiningEffect: React.FC<VisualCombiningEffectProps> = ({ isGenerating, vertical = false }) => {
+    // Simplified straight wire connection
+    // If vertical, path goes from top (50,0) to bottom (50,100)
+    const wirePath = vertical ? "M 50,0 L 50,100" : "M 0,50 L 100,50";
 
     return (
-        <div className="absolute top-1/2 left-full w-8 h-40 pointer-events-none z-0 overflow-visible hidden xl:block -translate-y-1/2">
+        <div className={`relative overflow-visible flex items-center justify-center ${vertical ? 'w-12 h-16' : 'w-24 h-12'}`}>
             <svg
                 className="w-full h-full overflow-visible"
                 viewBox="0 0 100 100"
@@ -33,75 +19,86 @@ export const VisualCombiningEffect: React.FC<VisualCombiningEffectProps> = ({ is
                 xmlns="http://www.w3.org/2000/svg"
             >
                 <defs>
-                    <linearGradient id="wirePulseGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <linearGradient id="wireGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.2" />
+                        <stop offset="50%" stopColor="var(--primary)" stopOpacity="0.5" />
+                        <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.2" />
+                    </linearGradient>
+
+                    <linearGradient id="activePulse" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" stopColor="var(--primary)" stopOpacity="0" />
-                        <stop offset="50%" stopColor="white" stopOpacity="0.8" />
+                        <stop offset="50%" stopColor="#fff" stopOpacity="1" />
                         <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
                     </linearGradient>
 
-                    <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
-                        <feGaussianBlur stdDeviation="1.5" result="blur" />
-                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                        <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                        <feMerge>
+                            <feMergeNode in="coloredBlur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
                     </filter>
                 </defs>
 
-                {wires.map((wire) => (
-                    <g key={wire.id}>
-                        {/* Static Path Background (the wire itself) */}
+                {/* Base Wire (Always Visible) */}
+                <path
+                    d={wirePath}
+                    stroke="var(--surfaceHighlight)"
+                    strokeWidth="3"
+                    fill="none"
+                    opacity="0.6"
+                />
+
+                {/* Connection Nodes */}
+                <circle cx={vertical ? "50" : "0"} cy={vertical ? "0" : "50"} r="3" fill="var(--surfaceHighlight)" />
+                <circle cx={vertical ? "50" : "100"} cy={vertical ? "100" : "50"} r="3" fill="var(--surfaceHighlight)" />
+
+
+                {/* Animated Data Flow (Only when generating) */}
+                {isGenerating && (
+                    <>
+                        {/* Glowing Path */}
                         <path
-                            d={wire.d}
-                            stroke="currentColor"
-                            strokeWidth="0.4"
+                            d={wirePath}
+                            stroke="url(#wireGradient)"
+                            strokeWidth="3"
                             fill="none"
-                            className="text-primary/10"
+                            filter="url(#glow)"
+                            className="opacity-80"
                         />
 
-                        {/* Glow Layer */}
-                        <path
-                            d={wire.d}
-                            stroke="var(--primary)"
-                            strokeWidth="0.8"
-                            fill="none"
-                            className="opacity-20"
-                            filter="url(#glowEffect)"
-                        />
-
-                        {/* Animated Energy Pulse */}
-                        <path
-                            d={wire.d}
-                            stroke="url(#wirePulseGradient)"
-                            strokeWidth="1.2"
-                            fill="none"
-                            strokeDasharray="15 85"
-                            filter="url(#glowEffect)"
-                        >
-                            <animate
-                                attributeName="stroke-dashoffset"
-                                from="100"
-                                to="-100"
-                                dur={`${wire.duration}s`}
-                                begin={`${wire.delay}s`}
-                                repeatCount="indefinite"
-                            />
-                        </path>
-
-                        {/* Leading Energy Sparkle */}
-                        <circle r="1" fill="white" filter="url(#glowEffect)">
+                        {/* Moving Energy Pulses */}
+                        <circle r="4" fill="#fff" filter="url(#glow)">
                             <animateMotion
-                                dur={`${wire.duration}s`}
-                                begin={`${wire.delay}s`}
+                                dur="1.5s"
                                 repeatCount="indefinite"
-                                path={wire.d}
+                                path={wirePath}
+                                calcMode="spline"
+                                keySplines="0.4 0 0.2 1"
+                                keyTimes="0;1"
                             />
                             <animate
                                 attributeName="opacity"
-                                values="0;1;0.5;0"
-                                dur={`${wire.duration}s`}
+                                values="0;1;0"
+                                dur="1.5s"
                                 repeatCount="indefinite"
                             />
                         </circle>
-                    </g>
-                ))}
+
+                        {/* Secondary trailing pulse */}
+                        <circle r="2" fill="var(--primary)" filter="url(#glow)">
+                            <animateMotion
+                                dur="1.5s"
+                                begin="0.2s"
+                                repeatCount="indefinite"
+                                path={wirePath}
+                                calcMode="spline"
+                                keySplines="0.4 0 0.2 1"
+                                keyTimes="0;1"
+                            />
+                        </circle>
+                    </>
+                )}
             </svg>
         </div>
     );
