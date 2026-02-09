@@ -141,6 +141,7 @@ const Content: React.FC = () => {
         ...prev,
         apiKey: stats.gemini_api_key || '',
         fullName: stats.full_name || '',
+        avatarUrl: stats.avatar_url || '',
         creditsRemaining: stats.remaining
       }));
     } catch (error) {
@@ -398,11 +399,15 @@ const Content: React.FC = () => {
                     className="flex items-center gap-3 pl-2 pr-1 py-1 rounded-full hover:bg-surfaceHighlight/50 transition-colors border border-transparent hover:border-border/50"
                   >
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 p-[1px]">
-                      <div className="w-full h-full rounded-full bg-surface flex items-center justify-center">
-                        <span className="text-xs font-bold text-primary">
-                          {(state.fullName || user.email || "").charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                      {state.avatarUrl ? (
+                        <img src={state.avatarUrl} alt="User" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full rounded-full bg-surface flex items-center justify-center">
+                          <span className="text-xs font-bold text-primary">
+                            {(state.fullName || user.email || "").charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <Icons.ChevronRight className={`w-4 h-4 text-text-muted transition-transform duration-300 ${showProfileMenu ? 'rotate-90' : 'rotate-0'}`} />
                   </button>
@@ -599,7 +604,7 @@ const Content: React.FC = () => {
                     <div className="text-sm text-text-muted">Platforms Supported</div>
                   </div>
                   <div className="text-center">
-                  
+
                     <div className="text-3xl font-bold text-text-main mb-1">&lt;15s</div>
                     <div className="text-sm text-text-muted">Average Generation</div>
                   </div>

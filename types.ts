@@ -52,6 +52,7 @@ export interface AppState {
   error: string | null;
   apiKey: string;
   fullName?: string;
+  avatarUrl?: string;
   creditsRemaining?: number;
   generationProgress: number;
 }

@@ -181,11 +181,15 @@ export const Generate: React.FC<GenerateProps> = ({
                             >
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-purple-600 p-[1px] shrink-0">
-                                        <div className="w-full h-full rounded-full bg-surface flex items-center justify-center">
-                                            <span className="text-xs font-bold text-primary">
-                                                {(state.fullName || user.email || "").charAt(0).toUpperCase()}
-                                            </span>
-                                        </div>
+                                        {state.avatarUrl ? (
+                                            <img src={state.avatarUrl} alt="User" className="w-full h-full rounded-full object-cover bg-surface" />
+                                        ) : (
+                                            <div className="w-full h-full rounded-full bg-surface flex items-center justify-center">
+                                                <span className="text-xs font-bold text-primary">
+                                                    {(state.fullName || user.email || "").charAt(0).toUpperCase()}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="min-w-0 text-left">
                                         <p className="text-xs font-bold text-text-main truncate">

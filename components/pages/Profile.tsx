@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Icons } from '../ui/Icons';
-import { getUserProfile, updateUserProfile, deleteAccount, getUserStats } from '../../services/supabaseService';
+import { getUserProfile, updateUserProfile, deleteAccount, getUserStats, uploadAvatar } from '../../services/supabaseService';
 import { useNavigate, Link } from 'react-router-dom';
 
 interface ProfileProps {
@@ -20,6 +20,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, authInitialized, setShow
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
     const [isDeleting, setIsDeleting] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     useEffect(() => {
@@ -49,11 +51,35 @@ export const Profile: React.FC<ProfileProps> = ({ user, authInitialized, setShow
                 getUserStats(user.id)
             ]);
             setFullName(profileData.full_name || '');
+            setAvatarUrl(profileData.avatar_url || '');
             setStats(statsData);
         } catch (error) {
             console.error('Error loading profile data:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        const file = e.target.files[0];
+
+        // Check size (< 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            setMessage({ type: 'error', text: 'Image size must be less than 2MB' });
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const url = await uploadAvatar(user.id, file);
+            setAvatarUrl(url);
+            setMessage({ type: 'success', text: 'Avatar updated!' });
+            if (onUpdateProfile) onUpdateProfile();
+        } catch (error: any) {
+            setMessage({ type: 'error', text: error.message || 'Failed to upload avatar' });
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -99,20 +125,18 @@ export const Profile: React.FC<ProfileProps> = ({ user, authInitialized, setShow
 
     return (
         <div className="min-h-screen text-text-main pb-10 ">
-            <div className="max-w-4xl mx-auto space-y-12">
+            <div className="max-w-4xl mx-auto space-y-6">
 
                 {/* Header Section */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-surfaceHighlight">
-                    <div className="space-y-2">
-                        <Link to="/generate" className="inline-flex items-center gap-2 text-text-muted hover:text-primary transition-colors text-sm mb-4 group">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-2 border-b border-surfaceHighlight">
+                    <div className="space-y-0">
+                        <Link to="/generate" className="inline-flex items-center gap-2 text-text-muted hover:text-primary transition-colors text-sm group">
                             <Icons.ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                             Back to Generate
                         </Link>
-                        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Account Settings</h1>
-                        <p className="text-text-muted">Manage your identity and platform usage.</p>
                     </div>
 
-                    
+
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
@@ -128,6 +152,40 @@ export const Profile: React.FC<ProfileProps> = ({ user, authInitialized, setShow
 
                             <div className="bg-white dark:bg-surface border border-surfaceHighlight rounded-2xl p-6 md:p-8 shadow-sm">
                                 <form onSubmit={handleUpdateProfile} className="space-y-6">
+                                    {/* Avatar Upload */}
+                                    <div className="flex flex-col items-center gap-4 pb-6 border-b border-surfaceHighlight">
+                                        <div className="relative group flex-shrink-0">
+                                            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-purple-600 p-[3px] shadow-2xl shadow-primary/20">
+                                                {avatarUrl ? (
+                                                    <img src={avatarUrl} alt="Avatar" className="w-full h-full rounded-full object-cover bg-surface" />
+                                                ) : (
+                                                    <div className="w-full h-full rounded-full bg-surface flex items-center justify-center">
+                                                        <span className="text-4xl font-bold text-primary">
+                                                            {(fullName || user.email || "").charAt(0).toUpperCase()}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {/* Overlay for upload */}
+                                                <label className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity backdrop-blur-[2px]">
+                                                    <Icons.Upload className="w-8 h-8 text-white drop-shadow-md" />
+                                                    <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploading} />
+                                                </label>
+                                            </div>
+                                            {isUploading && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-surface/80 rounded-full z-10">
+                                                    <Icons.RefreshCw className="w-8 h-8 text-primary animate-spin" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Dynamic Name Display */}
+                                        <div className="text-center ">
+                                            <h2 className="text-2xl font-bold text-text-main tracking-tight">
+                                                {fullName || 'Your Name'}
+                                            </h2>
+                                        </div>
+                                    </div>
+
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Display Name</label>
                                         <input
@@ -230,35 +288,35 @@ export const Profile: React.FC<ProfileProps> = ({ user, authInitialized, setShow
                                 ))}
                             </div>
 
-                           
+
                         </section>
                     </aside>
 
-                    
+
                 </div>
-                 {/* Danger Zone */}
-                        <section className="pt-8 border-t border-surfaceHighlight md:hidden">
-                            <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                                <div className="space-y-1">
-                                    <h4 className="text-base font-bold text-red-500 flex items-center gap-2">
-                                        <Icons.Trash2 className="w-4 h-4" />
-                                        Delete Account
-                                    </h4>
-                                    <p className="text-xs text-text-muted max-w-sm">
-                                        This will permanently delete your account and all associated data. This action is irreversible.
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => {
-                                        setDeleteConfirmationText('');
-                                        setShowDeleteModal(true);
-                                    }}
-                                    className="px-6 py-2.5 text-xs font-bold bg-transparent border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all"
-                                >
-                                    Terminate Account
-                                </button>
-                            </div>
-                        </section>
+                {/* Danger Zone */}
+                <section className="pt-8 border-t border-surfaceHighlight md:hidden">
+                    <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div className="space-y-1">
+                            <h4 className="text-base font-bold text-red-500 flex items-center gap-2">
+                                <Icons.Trash2 className="w-4 h-4" />
+                                Delete Account
+                            </h4>
+                            <p className="text-xs text-text-muted max-w-sm">
+                                This will permanently delete your account and all associated data. This action is irreversible.
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => {
+                                setDeleteConfirmationText('');
+                                setShowDeleteModal(true);
+                            }}
+                            className="px-6 py-2.5 text-xs font-bold bg-transparent border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all"
+                        >
+                            Terminate Account
+                        </button>
+                    </div>
+                </section>
             </div>
 
             {/* Modal */}

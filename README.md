@@ -31,7 +31,12 @@ From upload to complete social media kit in under 15 seconds. Spend less time br
 - No credit card required
 - Instant access after email verification
 
-### 🔐 Privacy First
+### � Seamless Authentication
+- **Sign in with Google** for instant access
+- **Custom Profiles** with avatar uploads
+- **Secure** email/password option
+
+### �🔐 Privacy First
 Built with security at its core. Your data and API keys are encrypted and handled with the highest standards of privacy.
 
 ---
@@ -89,8 +94,8 @@ snapkit/
 
 ## 💡 How It Works
 
-1. **User Signs Up** → Email verification sent 
-2. **User Verifies Email** → Account activated
+1. **User Signs Up** → via Google or Email
+2. **Verification** → Instant for Google, Email link for password users
 3. **User Uploads Image** → Stored securely in Cloudinary
 4. **AI Analyzes Image** → Gemini Vision API
 5. **Content Generated** → Captions, hashtags, scripts for all platforms

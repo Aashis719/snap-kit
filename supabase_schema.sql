@@ -53,8 +53,10 @@ begin
   values (
     new.id, 
     new.email, 
-    new.raw_user_meta_data->>'full_name', 
-    new.raw_user_meta_data->>'avatar_url'
+    -- Improve Google/OAuth name extraction
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'), 
+    -- Improve Google/OAuth avatar extraction
+    coalesce(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture')
   );
   return new;
 end;
@@ -396,4 +398,41 @@ group by p.id, p.email, p.free_generations_used, p.free_generations_limit;
 
 -- RLS for view
 alter view user_generation_stats set (security_invoker = true);
+
+-- ============================================
+-- 11. STORAGE FOR AVATARS
+-- ============================================
+-- 1. Create bucket (if not exists)
+insert into storage.buckets (id, name, public) 
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+-- 2. Policy: Public access to view avatars
+create policy "Avatar images are publicly accessible"
+  on storage.objects for select
+  using ( bucket_id = 'avatars' );
+
+-- 3. Policy: Upload own avatar
+create policy "Users can upload their own avatar"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'avatars' 
+    and auth.uid() = (storage.foldername(name))[1]::uuid
+  );
+
+-- 4. Policy: Update own avatar
+create policy "Users can update their own avatar"
+  on storage.objects for update
+  using (
+    bucket_id = 'avatars' 
+    and auth.uid() = (storage.foldername(name))[1]::uuid
+  );
+
+-- 5. Policy: Delete own avatar
+create policy "Users can delete their own avatar"
+  on storage.objects for delete
+  using (
+    bucket_id = 'avatars' 
+    and auth.uid() = (storage.foldername(name))[1]::uuid
+  );
 

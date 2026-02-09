@@ -107,7 +107,7 @@ export const updateUserApiKey = async (userId: string, apiKey: string): Promise<
 export const getUserFreeGenerationStats = async (userId: string) => {
     const { data, error } = await supabase
         .from('profiles')
-        .select('free_generations_used, free_generations_limit, free_tier_exhausted_at, gemini_api_key, full_name')
+        .select('free_generations_used, free_generations_limit, free_tier_exhausted_at, gemini_api_key, full_name, avatar_url')
         .eq('id', userId)
         .single();
 
@@ -124,7 +124,8 @@ export const getUserFreeGenerationStats = async (userId: string) => {
         hasOwnKey,
         canUseFreeTier: !hasOwnKey && remaining > 0,
         gemini_api_key: data?.gemini_api_key,
-        full_name: data?.full_name
+        full_name: data?.full_name,
+        avatar_url: data?.avatar_url
     };
 };
 
@@ -164,7 +165,7 @@ export const getUserProfile = async (userId: string) => {
 /**
  * Update user profile fields (like full_name)
  */
-export const updateUserProfile = async (userId: string, updates: { full_name?: string }) => {
+export const updateUserProfile = async (userId: string, updates: { full_name?: string; avatar_url?: string }) => {
     const { error } = await supabase
         .from('profiles')
         .update({
@@ -174,6 +175,31 @@ export const updateUserProfile = async (userId: string, updates: { full_name?: s
         .eq('id', userId);
 
     if (error) throw error;
+};
+
+/**
+ * Upload and update user avatar
+ */
+export const uploadAvatar = async (userId: string, file: File) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+    // Upload image
+    const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    // Get public URL
+    const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+    // Update profile
+    await updateUserProfile(userId, { avatar_url: publicUrl });
+
+    return publicUrl;
 };
 
 /**
