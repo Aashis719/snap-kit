@@ -74,7 +74,7 @@ export const About: React.FC = () => {
                                 We built SnapKit to change that. By combining advanced AI vision technology with deep social media expertise, we've created a tool that understands your images and generates platform-optimized content instantly.
                             </p>
                             <p>
-                                Today, SnapKit helps creators reclaim their time and focus on what they do best, creating amazing content.
+                                Today, SnapKit helps creators reclaim their time and focus on what they do best, creating amazing content. 
                             </p>
                         </div>
                     </div>
