@@ -103,7 +103,7 @@ export const Features: React.FC = () => {
                 <h1 className="text-5xl md:text-7xl font-extrabold text-text-primary mb-6 leading-tight">
                     Everything You Need
                     <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-500 to-pink-500">
-                        To Go Viral
+                        To Go Viral 
                     </span>
                 </h1>
 
