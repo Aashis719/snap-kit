@@ -307,7 +307,7 @@ export const Generate: React.FC<GenerateProps> = ({
                                             {state.status === 'generating' ? (
                                                 <>
                                                     <Icons.RefreshCw className="w-5 h-5 animate-spin" />
-                                                    Generating...
+                                                    Generating... 
                                                 </>
                                             ) : state.status === 'complete' ? (
                                                 <>
