@@ -9,7 +9,7 @@ export const NotFound: React.FC = () => {
                 {/* Animated 404 */}
                 <div className="relative mb-8">
                     <div className="text-[180px] md:text-[240px] font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-500 to-pink-500 leading-none animate-pulse">
-                        404
+                        404 
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center">
                         <div className="w-32 h-32 bg-gradient-to-r from-primary to-purple-600 rounded-full blur-3xl opacity-30 animate-pulse"></div>
