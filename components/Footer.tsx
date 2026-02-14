@@ -20,7 +20,7 @@ export const Footer: React.FC = () => {
                                 <img src="/snapkit.png" alt="SnapKit Logo" className="w-full h-full object-cover" />
                             </div>
                             <h3 className="text-xl font-bold bg-clip-text text-transparent bg-primary">
-                                SnapKit
+                                SnapKit 
                             </h3></a>
                         </div>
                         <p className="text-sm text-text-main max-w-xs leading-relaxed">
@@ -32,7 +32,7 @@ export const Footer: React.FC = () => {
                                 href="https://x.com/Aashis_19"
                                 className="text-text-muted hover:text-primary transition-colors"
                                 aria-label="Twitter"
-                                target="_blank"
+                                target="_blank" 
                             >
                                 <Icons.Twitter className="w-5 h-5" />
                             </a>
