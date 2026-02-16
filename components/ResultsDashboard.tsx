@@ -317,7 +317,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ result, user
                     <div className="font-bold text-sm text-text-main leading-tight">{userDisplayName}</div>
                   </div>
                 </div>
-                <CopyButton text={result.linkedin_post} />
+                <CopyButton text={result.linkedin_post} /> 
               </div> 
               <div className="prose prose-sm prose-invert max-w-none whitespace-pre-wrap text-text-main">
                 {result.linkedin_post}
