@@ -25,7 +25,7 @@ export const Scanner: React.FC<ScannerProps> = ({ image, isScanning, onClear, pr
             setInternalScanProgress(0);
         }
         return () => clearInterval(interval);
-    }, [isScanning, progress]);
+    }, [isScanning, progress]); 
 
     const displayProgress = typeof progress !== 'undefined' ? progress : internalScanProgress;
 
