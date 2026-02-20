@@ -67,7 +67,7 @@ export const UploadZone: React.FC<UploadZoneProps> = ({ onFileSelect }) => {
       </h3>
       
       <p className="text-sm text-text-muted max-w-xs mx-auto">
-        Drag & drop or click to browse. Supports JPG, PNG, WEBP up to 10MB.
+        Drag & drop or click to browse. Supports JPG, PNG, WEBP up to 10MB. 
       </p>
     </div>
   );
