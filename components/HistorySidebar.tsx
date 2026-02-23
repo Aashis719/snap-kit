@@ -14,7 +14,7 @@ interface HistorySidebarProps {
     variant?: 'drawer' | 'static';
     refreshKey?: number;
     currentId?: string;
-    onClear?: () => void;
+    onClear?: () => void; 
 }
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
