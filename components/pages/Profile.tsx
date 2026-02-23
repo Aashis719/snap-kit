@@ -140,7 +140,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, authInitialized, setShow
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                    {/* Main Settings Form */}
+                    
                     <div className="lg:col-span-2 space-y-8">
                         <section className="space-y-6">
                             <div className="flex items-center gap-2">
